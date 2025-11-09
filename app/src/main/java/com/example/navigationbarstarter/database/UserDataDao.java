@@ -15,7 +15,7 @@ public interface UserDataDao {
     @Delete
     int delete(UserData userData);
 
-    @Query("SELECT password FROM USERDATA WHERE id = id" )
+    @Query("SELECT password FROM USERDATA WHERE id = :id" )
     String getPassord(int id);
 
 }
