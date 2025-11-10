@@ -1,21 +1,37 @@
 package com.example.navigationbarstarter.database;
 
-import static android.icu.text.MessagePattern.ArgType.SELECT;
-
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 
 @Dao
 public interface UserDataDao {
-    @Insert
-    void insert(UserData userData);
+    //Using ABORT as a conflictStrategy, to return an error when we try to insert 2 times same user
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    long insert(UserData userData);
 
     @Delete
     int delete(UserData userData);
 
-    @Query("SELECT password FROM USERDATA WHERE id = :id" )
-    String getPassord(int id);
+    @Transaction
+    @Query("SELECT * FROM userdata WHERE username = :username AND password = :password LIMIT 1")
+    UserData login(String username, String password);
 
+    @Query("SELECT * FROM userdata WHERE email = :email LIMIT 1")
+    UserData getUserByEmail(String email);
+
+    @Query("SELECT * FROM userdata WHERE id = :id LIMIT 1")
+    UserData getUserById(int id);
+
+    @Query("SELECT COUNT(*) FROM userdata")
+    int getUserCount();
+
+    @Query("DELETE FROM userdata")
+    void deleteAll();
+
+    @Query("SELECT * FROM userdata WHERE username = :username")
+    UserData getUserByUsername(String username);
 }
