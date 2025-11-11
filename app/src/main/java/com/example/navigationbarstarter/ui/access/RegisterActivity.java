@@ -1,5 +1,6 @@
 package com.example.navigationbarstarter.ui.access;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -123,7 +124,11 @@ public class RegisterActivity extends AppCompatActivity {
         //When click run register method (do controls on fields ecc...)
         btnRegister.setOnClickListener(v -> register());
         //When click close this screen
-        tvGoToLogin.setOnClickListener(v -> finish());
+        tvGoToLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        });
     }
 
     //Validate fields as user types not only when pressed is clicked

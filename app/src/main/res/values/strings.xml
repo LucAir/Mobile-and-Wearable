@@ -12,4 +12,10 @@
     <string name="username">Username</string>
     <string name="sign_up_to_get_started">Sign up to get started</string>
     <string name="create_account">Create Account</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_to_your_account">Login to your account</string>
+    <string name="usernameLogin">Username</string>
+    <string name="passwordLogin">Password</string>
+    <string name="login">Login</string>
+    <string name="don_t_have_an_account_register">Don\'t have an account? Register</string>
 </resources>
