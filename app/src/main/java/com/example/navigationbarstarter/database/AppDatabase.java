@@ -6,28 +6,26 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {UserData.class}, version = 3, exportSchema = false)
+@Database(entities = {UserData.class, ModeChange.class}, version = 4, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
-    //Get instance (volatile -> ensures each thread reads the same variable)
     private static volatile AppDatabase instance;
-
-    //LOCK -> avoid overlap -> only one thread at time can use something
     private static final Object LOCK  = new Object();
 
     public abstract UserDataDao userDataDao();
+    public abstract ModeChangeDao modeChangeDao();
 
     public static synchronized AppDatabase getInstance(Context context) {
         if (instance == null) {
             synchronized (LOCK) {
                 if (instance == null) {
                     instance = Room.databaseBuilder(
-                            context.getApplicationContext(),
-                            AppDatabase.class,
-                            "app_database"
-                    )
-                    .fallbackToDestructiveMigration()
-                    .build();
+                                    context.getApplicationContext(),
+                                    AppDatabase.class,
+                                    "app_database"
+                            )
+                            .fallbackToDestructiveMigration()
+                            .build();
                 }
             }
         }
@@ -42,6 +40,4 @@ public abstract class AppDatabase extends RoomDatabase {
             instance = null;
         }
     }
-
-
 }

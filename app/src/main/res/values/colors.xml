@@ -7,4 +7,11 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="background_color">#F5F5F5</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="heart_color">#FF6B9D</color>
+    <color name="progress_color">#8BC34A</color>
+    <color name="progress_track">#E0E0E0</color>
+    <color name="icon_tint">#5C6BC0</color>
 </resources>
