@@ -43,7 +43,7 @@ public class UserData {
     @ColumnInfo(name = "password")
     private String password;
 
-    public UserData(@NonNull String username, @NonNull int age, @NonNull String email, @NonNull String password){
+    public UserData(@NonNull String username, @NonNull int age, @NonNull String email, @NonNull String password) {
         this.name = name;
         this.surname = surname;
         this.age = age;

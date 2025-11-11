@@ -26,7 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -378,23 +379,37 @@ public class RegisterActivity extends AppCompatActivity {
             hasErrors = true;
         }
 
+        //Regex: at least 8 chars, one uppercase, one special character
+        Pattern pattern = Pattern.compile("^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$");
+        Matcher matcher = pattern.matcher(password);
+
         if (password.isEmpty()) {
             tilPassword.setError("Password is required");
             hasErrors = true;
-        } else if (password.length() < 6) {
-            tilPassword.setError("Password must be at least 6 characters");
+        } else if (!matcher.matches()) {
+            tilPassword.setError("Password must include at least one uppercase letter and one special character");
             hasErrors = true;
         } else if (password.length() > 50) {
             tilPassword.setError("Password must be less than 50 characters");
             hasErrors = true;
+        } else if (password.length() < 8) {
+            tilPassword.setError("Password must be at least 8 characters");
+            hasErrors = true;
+        } else {
+            tilPassword.setError(null); //clear error
         }
 
+
+
+        //confirm password checks
         if (confirmPassword.isEmpty()) {
             tilConfirmPassword.setError("Please confirm your password");
             hasErrors = true;
         } else if (!password.equals(confirmPassword)) {
             tilConfirmPassword.setError("Passwords do not match");
             hasErrors = true;
+        } else {
+            tilConfirmPassword.setError(null);
         }
 
         //Parse age - use final array to avoid lambda issue
