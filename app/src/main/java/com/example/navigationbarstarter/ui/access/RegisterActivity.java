@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -290,7 +292,12 @@ public class RegisterActivity extends AppCompatActivity {
                 if (!isFinishing() && !isDestroyed()) {
                     mainHandler.post(() -> {
                         // Only show error if the field still has the same value
-                        String currentUsername = etUsername.getText().toString().trim();
+                        String currentUsername;
+                        if (etUsername.getText() != null) {
+                            currentUsername = etUsername.getText().toString().trim();
+                        } else {
+                            return;
+                        }
                         if (currentUsername.equals(username)) {
                             if (existingUser != null) {
                                 tilUsername.setError("Username already taken");
@@ -424,7 +431,7 @@ public class RegisterActivity extends AppCompatActivity {
         //Execute registration on background thread
         currentTask = executorService.submit(() -> {
             try {
-                Thread.sleep(300); // Simulate network delay
+                Thread.sleep(300);
 
                 //Check if a user is already in the db
                 UserData existUser = appDatabase.userDataDao().getUserByUsername(username);
@@ -455,6 +462,8 @@ public class RegisterActivity extends AppCompatActivity {
                 //Create new user with all fields
                 UserData newUser = new UserData(username, age, email, password);
                 long resultOperation = appDatabase.userDataDao().insert(newUser);
+                //TODO: understand how to log
+                Log.e("NEW USER", "msg: "+ resultOperation);
 
                 //Check if activity is still alive
                 if (isFinishing() || isDestroyed()) {
