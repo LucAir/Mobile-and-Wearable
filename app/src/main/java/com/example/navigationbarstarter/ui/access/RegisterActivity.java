@@ -67,6 +67,11 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        //Show the arrow to go back
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         //Initialize threading components FIRST
         executorService = Executors.newCachedThreadPool();
         mainHandler = new Handler(Looper.getMainLooper());
@@ -574,6 +579,12 @@ public class RegisterActivity extends AppCompatActivity {
         if(!isFinishing() && !isDestroyed()) {
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish(); //go back to AccessActivity
+        return true;
     }
 
     @Override

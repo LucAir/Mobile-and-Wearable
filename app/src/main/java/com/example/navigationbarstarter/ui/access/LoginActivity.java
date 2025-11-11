@@ -17,7 +17,6 @@ import com.example.navigationbarstarter.MainActivity;
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
-import com.example.navigationbarstarter.ui.home.HomeFragment;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.concurrent.ExecutorService;
@@ -42,12 +41,17 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        //Show the arrow to go back
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         //Initialize threading components first
         executorService = Executors.newCachedThreadPool();
         mainHandler = new Handler(Looper.getMainLooper());
         appDatabase = AppDatabase.getInstance(this);
 
-        // Check if user is already logged in (on background thread)
+        //Check if user is already logged in (on background thread)
         checkExistingSession();
 
         //Set up view
@@ -206,6 +210,12 @@ public class LoginActivity extends AppCompatActivity {
         if (!isFinishing() && !isDestroyed()) {
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish(); //go back to AccessActivity
+        return true;
     }
 
     @Override
