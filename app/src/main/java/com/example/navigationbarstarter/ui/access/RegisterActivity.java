@@ -229,8 +229,8 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 String password = s.toString();
-                if (!password.isEmpty() && password.length() < 6) {
-                    tilPassword.setError("Password must be at least 6 characters");
+                if (!password.isEmpty() && password.length() < 8) {
+                    tilPassword.setError("Password must be at least 8 characters");
                 } else if (!password.isEmpty() && password.length() > 50) {
                     tilPassword.setError("Password must be less than 50 characters");
                 }
