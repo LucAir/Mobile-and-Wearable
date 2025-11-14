@@ -26,13 +26,19 @@ public class ItemsData {
     @ColumnInfo(name = "price_to_unlock")
     private long priceToUnlock;
 
+    @NonNull
     @ColumnInfo(name = "type")
     private Type type;
-    public ItemsData (String name, Rarity rarity, boolean unlocked, long priceToUnlock, Type type) {
+
+    @ColumnInfo(name = "image_res_id")
+    private int imageResId;
+
+    public ItemsData (@NonNull String name, @NonNull Rarity rarity, boolean unlocked, long priceToUnlock, @NonNull Type type, int imageResId) {
         this.name = name;
         this.rarity = rarity;
         this.priceToUnlock = priceToUnlock;
         this.type = type;
+        this.imageResId = imageResId;
     }
 
     public long getId() {
@@ -75,5 +81,13 @@ public class ItemsData {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public int getImageResId() {
+        return imageResId;
+    }
+
+    public void setImageResId(int imageResId) {
+        this.imageResId = imageResId;
     }
 }
