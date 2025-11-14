@@ -6,7 +6,17 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {UserData.class, ModeChange.class}, version = 4, exportSchema = false)
+import com.example.navigationbarstarter.database.guardian.GuardianData;
+import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
+import com.example.navigationbarstarter.database.guardian.ItemsData;
+import com.example.navigationbarstarter.database.guardian.ItemsDataDao;
+
+@Database(entities = {UserData.class,
+                      ModeChange.class,
+                      GuardianData.class,
+                      ItemsData.class
+                      }, version = 5, exportSchema = false)
+
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase instance;
@@ -14,6 +24,8 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract UserDataDao userDataDao();
     public abstract ModeChangeDao modeChangeDao();
+    public abstract GuardianDataDao guardianDataDao();
+    public abstract ItemsDataDao itemsDataDao();
 
     public static synchronized AppDatabase getInstance(Context context) {
         if (instance == null) {

@@ -409,8 +409,6 @@ public class RegisterActivity extends AppCompatActivity {
             tilPassword.setError(null); //clear error
         }
 
-
-
         //confirm password checks
         if (confirmPassword.isEmpty()) {
             tilConfirmPassword.setError("Please confirm your password");
