@@ -20,9 +20,13 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.navigationbarstarter.R;
+import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.databinding.FragmentHomeBinding;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,8 +51,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private View pulseCircleInner;
 
     // Sensor Management
-    private SensorManager sensorManager;
-    private Sensor heartRateSensor;
+
 
     // Mode tracking
     private static final String MODE_FOCUS = "Focus Mode: Active";
@@ -57,7 +60,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
     private String currentMode = MODE_FOCUS;
     private long modeStartTime;
-    private int currentHeartRate = 72; // Default
+    private int currentHeartRate; // Default
 
     // Timer
     private Handler timerHandler;
@@ -66,6 +69,9 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
     // Executor for database operations
     private ExecutorService executorService;
+
+    private CSVHeartbeatSimulator heartbeatSimulator;
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -77,9 +83,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
         // Initialize UI components
         initializeViews();
-
-        // Initialize sensors
-        initializeSensors();
 
         // Initialize timer
         initializeTimer();
@@ -95,10 +98,33 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         modeStartTime = System.currentTimeMillis();
         updateModeDisplay();
 
+        heartbeatSimulator = new CSVHeartbeatSimulator();
+
+        InputStream csvStream = getResources().openRawResource(R.raw.heart_rate_clean);
+        heartbeatSimulator.loadCSV(csvStream);
+
+// Start simulation with 1-second interval
+        heartbeatSimulator.startSimulation(bpm -> {
+            currentHeartRate = bpm; // Always updated from CSV
+
+            requireActivity().runOnUiThread(() -> {
+                // Show current BPM
+                heartRateText.setText(String.format(Locale.getDefault(), "%d BPM", currentHeartRate));
+
+                // Timer + BPM
+                updateTimerDisplay();
+
+                // Animate heartbeat icon
+                adjustHeartbeatSpeed(currentHeartRate);
+
+                // Update mode
+                updateModeBasedOnHeartRate();
+            });
+        }, 1000);
+
+
         return root;
     }
-
-    private Slider heartRateSlider;
 
     private void initializeViews() {
         focusModeStatus = binding.focusModeStatus;
@@ -110,34 +136,15 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         heartbeatLine = binding.heartbeatLine;
         pulseCircleOuter = binding.pulseCircleOuter;
         pulseCircleInner = binding.pulseCircleInner;
-        heartRateSlider = binding.heartRateSlider; // new
-
         // Show heart rate text for debugging
         heartRateText.setVisibility(View.VISIBLE);
 
-        // Setup slider listener
-        setupHeartRateSlider();
     }
 
 
-    private void setupHeartRateSlider() {
-        heartRateSlider.addOnChangeListener((slider, value, fromUser) -> {
-            currentHeartRate = Math.round(value);
-            heartRateText.setText(String.format(Locale.getDefault(), "%d BPM", currentHeartRate));
-            adjustHeartbeatSpeed(currentHeartRate);
-            updateModeBasedOnHeartRate();
-        });
-    }
 
 
-    private void initializeSensors() {
-        sensorManager = (SensorManager) requireActivity().getSystemService(android.content.Context.SENSOR_SERVICE);
-        heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
 
-        if (heartRateSensor != null) {
-            sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
 
     private void initializeTimer() {
         timerHandler = new Handler(Looper.getMainLooper());
@@ -158,7 +165,8 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         long minutes = (elapsedTimeInMode / 1000) / 60;
 
         String timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
-        timerText.setText(timeString);
+        String displayText = String.format(Locale.getDefault(), "%s  |  %d BPM", timeString, currentHeartRate);
+        timerText.setText(displayText);
 
         // Update progress indicator (example: 25 minute cycle)
         int progressPercentage = (int) ((elapsedTimeInMode / 1000) % 1500) / 15; // 25 min = 1500 sec
@@ -167,6 +175,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // Update subtitle based on mode
         updateSubtitle();
     }
+
 
     private void updateSubtitle() {
         switch (currentMode) {
@@ -246,33 +255,30 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // Handle accuracy changes if needed
     }
 
-    private void startHeartbeatAnimation() {
-        // Animate heart icon with beat
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(heartIcon, "scaleX", 1.0f, 1.15f, 1.0f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(heartIcon, "scaleY", 1.0f, 1.15f, 1.0f);
+    private ObjectAnimator scaleX, scaleY, alpha;
 
-        scaleX.setDuration(800);
-        scaleY.setDuration(800);
+    private void startHeartbeatAnimation() {
+        scaleX = ObjectAnimator.ofFloat(heartIcon, "scaleX", 1.0f, 1.15f, 1.0f);
+        scaleY = ObjectAnimator.ofFloat(heartIcon, "scaleY", 1.0f, 1.15f, 1.0f);
+        alpha = ObjectAnimator.ofFloat(heartbeatLine, "alpha", 0.6f, 1.0f, 0.6f);
+
         scaleX.setRepeatCount(ValueAnimator.INFINITE);
         scaleY.setRepeatCount(ValueAnimator.INFINITE);
+        alpha.setRepeatCount(ValueAnimator.INFINITE);
+
         scaleX.setInterpolator(new AccelerateDecelerateInterpolator());
         scaleY.setInterpolator(new AccelerateDecelerateInterpolator());
 
         scaleX.start();
         scaleY.start();
-
-        // Animate heartbeat line
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(heartbeatLine, "alpha", 0.6f, 1.0f, 0.6f);
-        alpha.setDuration(800);
-        alpha.setRepeatCount(ValueAnimator.INFINITE);
         alpha.start();
     }
 
     private void adjustHeartbeatSpeed(int bpm) {
-        // Calculate beat duration in milliseconds (60000 ms / bpm)
         long beatDuration = bpm > 0 ? 60000 / bpm : 800;
-
-        // You can restart animations with new duration here if needed
+        scaleX.setDuration(beatDuration);
+        scaleY.setDuration(beatDuration);
+        alpha.setDuration(beatDuration);
     }
 
     private void startPulseAnimation() {
@@ -287,22 +293,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         pulseInner.setStartDelay(500);
         pulseInner.setRepeatCount(ValueAnimator.INFINITE);
         pulseInner.start();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (heartRateSensor != null) {
-            sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (sensorManager != null) {
-            sensorManager.unregisterListener(this);
-        }
     }
 
     @Override
