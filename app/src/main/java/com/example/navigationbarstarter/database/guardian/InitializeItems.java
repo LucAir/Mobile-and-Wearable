@@ -1,7 +1,5 @@
 package com.example.navigationbarstarter.database.guardian;
 
-import android.content.ClipData;
-
 import com.example.navigationbarstarter.R;
 
 import java.util.ArrayList;
@@ -12,11 +10,11 @@ public class InitializeItems {
     public static List<ItemsData> initializeCollectiblesForUser(int userId) {
         List<ItemsData> itemsDataList = new ArrayList<>();
 
-        itemsDataList.add();
+        return itemsDataList;
     }
 
     //Constructor to initialize hat
-    private static List<ItemsData> createHats() {
+    private static List<ItemsData> initiliazeHat() {
         List<ItemsData> hatList = new ArrayList<>();
 
         ItemsData noHat = new ItemsData("Regular Head", Rarity.COMMON, true, 0, Type.HAT, R.drawable.common_hat_head);
@@ -28,7 +26,7 @@ public class InitializeItems {
         return hatList;
     }
 
-    private static List<ItemsData> createTshirts() {
+    private static List<ItemsData> initializeTshirt() {
         List<ItemsData> tshirtList = new ArrayList<>();
 
         //COMMON
@@ -60,4 +58,10 @@ public class InitializeItems {
         return tshirtList;
     }
 
+    private static List<ItemsData> initializePet() {
+        List<ItemsData> petList = new ArrayList<>();
+
+        ItemsData dragonPet = new ItemsData("Dragon", Rarity.RARE, false, 10000, Type.PET, R.drawable.rare_pet_dragon);
+        return petList;
+    }
 }
