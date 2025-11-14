@@ -54,10 +54,9 @@ public class UserData {
 
     @NonNull
     @ColumnInfo(name = "list_unlocked_items")
-    List<ItemsData> unlockedItems;
+    List<Long> unlockedItems;
 
-
-    public UserData(@NonNull String username, @NonNull int age, @NonNull String email, @NonNull String password, @NonNull long guardianId, @NonNull List<ItemsData> unlockedItems) {
+    public UserData(@NonNull String username, @NonNull int age, @NonNull String email, @NonNull String password, @NonNull long guardianId, @NonNull List<Long> unlockedItems) {
         this.name = name;
         this.surname = surname;
         this.age = age;

@@ -33,7 +33,7 @@ public class ItemsData {
     @ColumnInfo(name = "image_res_id")
     private int imageResId;
 
-    public ItemsData (@NonNull String name, @NonNull Rarity rarity, boolean unlocked, long priceToUnlock, @NonNull Type type, int imageResId) {
+    public ItemsData (@NonNull String name, @NonNull Rarity rarity, long priceToUnlock, @NonNull Type type, int imageResId) {
         this.name = name;
         this.rarity = rarity;
         this.priceToUnlock = priceToUnlock;

@@ -20,9 +20,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
+import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -482,8 +485,13 @@ public class RegisterActivity extends AppCompatActivity {
                     return;
                 }
 
+                //Creating a guardian with default items
+                GuardianData guardian = new GuardianData();
+                long guardianId = appDatabase.guardianDataDao().insert(guardian);
+                List<Long> unlockedItems = new ArrayList<>();
+
                 //Create new user with all fields
-                UserData newUser = new UserData(username, age, email, password);
+                UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems);
                 long resultOperation = appDatabase.userDataDao().insert(newUser);
                 //TODO: understand how to log
                 Log.e("NEW USER", "msg: "+ resultOperation);
