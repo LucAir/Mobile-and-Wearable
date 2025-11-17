@@ -1,4 +1,4 @@
-package com.example.navigationbarstarter.database.guardian;
+package com.example.navigationbarstarter.database.item;
 
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;

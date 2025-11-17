@@ -14,4 +14,7 @@
     <color name="progress_color">#8BC34A</color>
     <color name="progress_track">#E0E0E0</color>
     <color name="icon_tint">#5C6BC0</color>
+    <color name="token_gold">#F6D529</color>
+    <color name="rarity_common">#ECECEC</color>
+    <color name="top_bar_background">#FFFFFF</color>
 </resources>

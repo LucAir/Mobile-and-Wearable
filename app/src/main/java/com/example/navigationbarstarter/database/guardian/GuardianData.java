@@ -5,6 +5,9 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity(tableName = "guardian")
 public class GuardianData {
 
@@ -19,10 +22,10 @@ public class GuardianData {
     @ColumnInfo(name = "equipped_hat")
     private long equippedHat;
 
-    @ColumnInfo(name = "equipped_T_shirt")
+    @ColumnInfo(name = "equipped_tshirt")
     private long equippedTshirt;
 
-    //
+
     @ColumnInfo(name = "equipped_pet")
     private long equippedPet;
 
@@ -40,15 +43,17 @@ public class GuardianData {
         this.equippedTshirt = 1;
         this.equippedAura = 2;
         this.equippedBackground = 3;
+        this.equippedPet = 4;
     }
 
-    public GuardianData(String name, long equippedHat, long equippedTshirt, long equippedAura, long equippedBackground) {
-        this.name = name;
-        this.equippedHat = equippedHat;
-        this.equippedTshirt = equippedTshirt;
-        this.equippedAura = equippedAura;
-        this.equippedBackground = equippedBackground;
-    }
+//    public GuardianData(String name, long equippedHat, long equippedTshirt, long equippedAura, long equippedBackground, long equippedPet) {
+//        this.name = name;
+//        this.equippedHat = equippedHat;
+//        this.equippedTshirt = equippedTshirt;
+//        this.equippedAura = equippedAura;
+//        this.equippedBackground = equippedBackground;
+//        this.equippedPet = equippedPet;
+//    }
 
     public long getGuardianId() {
         return guardianId;
@@ -105,5 +110,15 @@ public class GuardianData {
 
     public void setEquippedBackground(long equippedBackground) {
         this.equippedBackground = equippedBackground;
+    }
+
+    public List<Long> getEquippedItems() {
+        List<Long> equippedItems = new ArrayList<>();
+        equippedItems.add(this.equippedHat);
+        equippedItems.add(this.equippedTshirt);
+        equippedItems.add(this.equippedAura);
+        equippedItems.add(this.equippedBackground);
+        equippedItems.add(this.equippedPet);
+        return equippedItems;
     }
 }

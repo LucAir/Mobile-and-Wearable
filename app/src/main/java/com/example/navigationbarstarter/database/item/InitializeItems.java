@@ -1,4 +1,4 @@
-package com.example.navigationbarstarter.database.guardian;
+package com.example.navigationbarstarter.database.item;
 
 import com.example.navigationbarstarter.R;
 
@@ -7,7 +7,7 @@ import java.util.List;
 
 public class InitializeItems {
 
-    public static List<ItemsData> initializeCollectiblesForUser(int userId) {
+    public static List<ItemsData> initializeCollectiblesForUser() {
         List<ItemsData> itemsDataList = new ArrayList<>();
 
         return itemsDataList;

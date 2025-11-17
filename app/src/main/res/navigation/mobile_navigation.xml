@@ -22,4 +22,10 @@
         android:name="com.example.navigationbarstarter.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/navigation_guardian"
+        android:name="com.example.navigationbarstarter.ui.guardian.GuardianFragment"
+        android:label="Guardian"
+        tools:layout="@layout/fragment_guardian" />
 </navigation>
