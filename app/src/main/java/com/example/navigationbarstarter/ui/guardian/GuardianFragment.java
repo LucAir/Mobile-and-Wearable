@@ -338,48 +338,13 @@ public class GuardianFragment extends Fragment {
         //Items map (all items by ID)
         viewModel.getItemsMapLiveData().observe(getViewLifecycleOwner(), map -> {
             this.itemsMap = map;
+            updateGuardianPreview();
         });
 
         //Equipped items
         viewModel.getEquippedItemsLiveData().observe(getViewLifecycleOwner(), equippedItems -> {
-            //viewModel should return a list that contains items or nulls in known order, or map by type
-            //We'll try to set images by matching their type
-            if (equippedItems != null) {
-                itemsAdapter.setEquippedItemIds(equippedItems);
-            }
+            updateGuardianPreview();
 
-            clearGuardianImages();
-
-            //Update the guardian preview by layering equipped items
-            for (Long itemId : equippedItems) {
-                if (itemId == null || itemId == 0) continue;
-                ItemsData item = itemsMap.get(itemId);
-                if (item == null) continue;
-
-                switch (item.getType()) {
-                    case BACKGROUND:
-                        layerBackground.setImageResource(item.getImageResId());
-                        layerBackground.setVisibility(View.VISIBLE);
-                        break;
-                    case AURA:
-                        layerAura.setImageResource(item.getImageResId());
-                        layerAura.setVisibility(View.VISIBLE);
-                        break;
-                    case TSHIRT:
-                        layerBody.setImageResource(item.getImageResId());
-                        layerBody.setVisibility(View.VISIBLE);
-                        break;
-                    case HAT:
-                        layerFace.setImageResource(item.getImageResId());
-                        layerFace.setVisibility(View.VISIBLE);
-                        break;
-                    case PET:
-                        layerPet.setImageResource(item.getImageResId());
-                        layerPet.setVisibility(View.VISIBLE);
-                        break;
-                }
-            }
-            itemsAdapter.setEquippedItemIds(equippedItems);
         });
 
         //Item lists for current category TODO: check if current category
@@ -415,6 +380,49 @@ public class GuardianFragment extends Fragment {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateGuardianPreview() {
+
+        //Safety checks
+        if (itemsMap == null || itemsMap.isEmpty()) return;
+        if (viewModel.getEquippedItemsLiveData().getValue() == null) return;
+
+        List<Long> equippedItems = viewModel.getEquippedItemsLiveData().getValue();
+
+        //Clear previous images
+        clearGuardianImages();
+
+        for (Long itemId : equippedItems) {
+            if (itemId == null || itemId == 0) continue;
+
+            ItemsData item = itemsMap.get(itemId);
+            if (item == null) continue;
+
+            switch (item.getType()) {
+                case BACKGROUND:
+                    layerBackground.setImageResource(item.getImageResId());
+                    layerBackground.setVisibility(View.VISIBLE);
+                    break;
+                case AURA:
+                    layerAura.setImageResource(item.getImageResId());
+                    layerAura.setVisibility(View.VISIBLE);
+                    break;
+                case TSHIRT:
+                    layerBody.setImageResource(item.getImageResId());
+                    layerBody.setVisibility(View.VISIBLE);
+                    break;
+                case HAT:
+                    layerFace.setImageResource(item.getImageResId());
+                    layerFace.setVisibility(View.VISIBLE);
+                    break;
+                case PET:
+                    layerPet.setImageResource(item.getImageResId());
+                    layerPet.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
+        itemsAdapter.setEquippedItemIds(equippedItems);
     }
 
     //Item click handling
