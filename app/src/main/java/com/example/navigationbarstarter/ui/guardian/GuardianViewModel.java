@@ -61,14 +61,6 @@ public class GuardianViewModel extends AndroidViewModel {
         executor = Executors.newSingleThreadExecutor();
     }
 
-    public void initializeItemsIfNeeded(Runnable callback) {
-        loading.postValue(true);
-        guardianRepository.initializeItemsIfNeeded(() -> {
-            loading.postValue(false);
-            if (callback != null) callback.run();
-        });
-    }
-
     public void loadItemsByType(Type type) {
         loading.postValue(true);
         guardianRepository.loadItemsByType(type, items -> {

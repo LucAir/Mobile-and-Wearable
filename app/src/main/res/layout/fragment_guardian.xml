@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Token indicator - using text instead of icon -->
+        <!-- Token indicator -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#FFB300"
-            tools:text="1,250" />
+            tools:text="50" />
 
         <View
             android:layout_width="0dp"
@@ -46,137 +46,232 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/customize_guardian"
+            android:text="Customize Guardian"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#212121" />
     </LinearLayout>
 
-    <!-- Category Selector (Horizontal ScrollView) -->
-    <HorizontalScrollView
-        android:id="@+id/category_scroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:scrollbars="none"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+    <!-- RIGHT SIDEBAR: Vertical Category Buttons -->
+    <LinearLayout
+        android:id="@+id/category_sidebar"
+        android:layout_width="90dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="#F5F5F5"
+        android:elevation="2dp"
         app:layout_constraintTop_toBottomOf="@id/top_bar"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_hat"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
+            android:text="🎩\nHat"
+            android:textAllCaps="false"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="4dp"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_tshirt"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
+            android:text="👕\nShirt"
+            android:textAllCaps="false"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="4dp"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_aura"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
+            android:text="✨\nAura"
+            android:textAllCaps="false"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="4dp"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_background"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
+            android:text="🌄\nBG"
+            android:textAllCaps="false"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="4dp"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_pet"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="🐶\nPet"
+            android:textAllCaps="false"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="4dp"
+            app:cornerRadius="8dp" />
+
+    </LinearLayout>
+
+    <!-- GUARDIAN PREVIEW (Layered Character) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_guardian_preview"
+        android:layout_width="0dp"
+        android:layout_height="220dp"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar">
+
+        <!-- Layered Guardian Preview -->
+        <FrameLayout
+            android:id="@+id/guardian_preview_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_guardian_preview">
+
+            <!-- Background Layer (furthest back) -->
+            <ImageView
+                android:id="@+id/layer_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="invisible"
+                android:contentDescription="Background layer" />
+
+            <!-- Aura Layer (behind character) -->
+            <ImageView
+                android:id="@+id/layer_aura"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:visibility="invisible"
+                android:contentDescription="Aura layer" />
+
+            <!-- Base Character Face (always visible) -->
+            <ImageView
+                android:id="@+id/layer_face"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:src="@drawable/common_hat_head"
+                android:contentDescription="Base character face" />
+
+            <!-- Body/T-shirt Layer (on character body) -->
+            <ImageView
+                android:id="@+id/layer_body"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:visibility="invisible"
+                android:contentDescription="Body layer" />
+
+            <!-- Pet Layer (companion, positioned at bottom-right) -->
+            <ImageView
+                android:id="@+id/layer_pet"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="12dp"
+                android:scaleType="centerInside"
+                android:visibility="invisible"
+                android:contentDescription="Pet layer" />
+
+        </FrameLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Rarity Filter Chips (Horizontal) -->
+    <HorizontalScrollView
+        android:id="@+id/rarity_scroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/card_guardian_preview"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_rarity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            app:singleSelection="true"
+            app:selectionRequired="false">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_hat"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_all"
+                style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="🎩 Hat"
-                android:textAllCaps="false" />
+                android:text="All"
+                android:checked="true" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_tshirt"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_common"
+                style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="👕 T-Shirt"
-                android:textAllCaps="false" />
+                android:text="Common" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_aura"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_rare"
+                style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="✨ Aura"
-                android:textAllCaps="false" />
+                android:text="Rare" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_background"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_legendary"
+                style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="🌄 Background"
-                android:textAllCaps="false" />
+                android:text="Legendary" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_pet"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🐶 Pet"
-                android:textAllCaps="false" />
-
-        </LinearLayout>
+        </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
-    <!-- Rarity Filter Chips -->
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chip_group_rarity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginStart="16dp"
-        app:singleSelection="true"
-        app:selectionRequired="false"
-        app:layout_constraintTop_toBottomOf="@id/category_scroll"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_all"
-            style="@style/Widget.Material3.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/rarity_all"
-            android:checked="true" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_common"
-            style="@style/Widget.Material3.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/rarity_common" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_rare"
-            style="@style/Widget.Material3.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/rarity_rare" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_legendary"
-            style="@style/Widget.Material3.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/rarity_legendary" />
-
-    </com.google.android.material.chip.ChipGroup>
-
-    <!-- Items RecyclerView -->
+    <!-- Items RecyclerView (Grid) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/items_recycler_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:clipToPadding="false"
         android:padding="8dp"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:spanCount="2"
         tools:listitem="@layout/item_guardian"
-        app:layout_constraintTop_toBottomOf="@id/chip_group_rarity"
+        app:layout_constraintTop_toBottomOf="@id/rarity_scroll"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar" />
 
     <!-- Loading Indicator -->
     <ProgressBar
@@ -187,13 +282,13 @@
         app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         app:layout_constraintBottom_toBottomOf="@id/items_recycler_view"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         tools:visibility="visible" />
 
     <!-- Empty State -->
     <LinearLayout
         android:id="@+id/empty_state"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
@@ -201,10 +296,9 @@
         app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         app:layout_constraintBottom_toBottomOf="@id/items_recycler_view"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         tools:visibility="visible">
 
-        <!-- Using emoji instead of drawable -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -216,10 +310,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/no_items_available"
+            android:text="No items available"
             android:textSize="16sp"
             android:textColor="#757575" />
 
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

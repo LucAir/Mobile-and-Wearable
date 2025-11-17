@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -59,6 +58,9 @@ public class GuardianFragment extends Fragment {
      */
 
     private GuardianViewModel viewModel;
+
+    //Guardian layer
+    private ImageView layerBackground, layerAura, layerFace, layerBody, layerPet;
 
     //Views -> guardian layered
     private MaterialButton btnBackground, btnBody, btnTshirt, btnHat, btnAura, btnPet;
@@ -173,6 +175,13 @@ public class GuardianFragment extends Fragment {
         chipRare = view.findViewById(R.id.chip_rare);
         chipLegendary = view.findViewById(R.id.chip_legendary);
 
+        //Guardian layer
+        layerBackground = view.findViewById(R.id.layer_background);
+        layerAura = view.findViewById(R.id.layer_aura);
+        layerFace = view.findViewById(R.id.layer_face);
+        layerBody = view.findViewById(R.id.layer_body);
+        layerPet = view.findViewById(R.id.layer_pet);
+
         //SetUp everything
         setupCategoryButtons();
         setupRarityChips();
@@ -230,7 +239,7 @@ public class GuardianFragment extends Fragment {
         btnBackground.setOnClickListener(v -> onCategorySelected(BACKGROUND));
         btnPet.setOnClickListener(v -> onCategorySelected(PET));
 
-        // Set initial selected state
+        //Set initial selected state
         updateCategoryButtonStates();
     }
 
@@ -241,12 +250,15 @@ public class GuardianFragment extends Fragment {
     }
 
     private void updateCategoryButtonStates() {
-        // Reset all buttons
-        btnHat.setBackgroundColor(selectedType == HAT ? 0xFFE0E0E0 : 0x00000000);
-        btnTshirt.setBackgroundColor(selectedType == TSHIRT ? 0xFFE0E0E0 : 0x00000000);
-        btnAura.setBackgroundColor(selectedType == AURA ? 0xFFE0E0E0 : 0x00000000);
-        btnBackground.setBackgroundColor(selectedType == BACKGROUND ? 0xFFE0E0E0 : 0x00000000);
-        btnPet.setBackgroundColor(selectedType == PET ? 0xFFE0E0E0 : 0x00000000);
+        int selectedColor = Color.parseColor("#E3F2FD");
+        int defaultColor = Color.TRANSPARENT;
+
+        //Reset all buttons
+        btnHat.setBackgroundColor(selectedType == HAT ? selectedColor : defaultColor);
+        btnTshirt.setBackgroundColor(selectedType == TSHIRT ? selectedColor : defaultColor);
+        btnAura.setBackgroundColor(selectedType == AURA ? selectedColor : defaultColor);
+        btnBackground.setBackgroundColor(selectedType == BACKGROUND ? selectedColor : defaultColor);
+        btnPet.setBackgroundColor(selectedType == PET ? selectedColor : defaultColor);
     }
 
     private void setupRarityChips() {
@@ -335,6 +347,39 @@ public class GuardianFragment extends Fragment {
             if (equippedItems != null) {
                 itemsAdapter.setEquippedItemIds(equippedItems);
             }
+
+            clearGuardianImages();
+
+            //Update the guardian preview by layering equipped items
+            for (Long itemId : equippedItems) {
+                if (itemId == null || itemId == 0) continue;
+                ItemsData item = itemsMap.get(itemId);
+                if (item == null) continue;
+
+                switch (item.getType()) {
+                    case BACKGROUND:
+                        layerBackground.setImageResource(item.getImageResId());
+                        layerBackground.setVisibility(View.VISIBLE);
+                        break;
+                    case AURA:
+                        layerAura.setImageResource(item.getImageResId());
+                        layerAura.setVisibility(View.VISIBLE);
+                        break;
+                    case TSHIRT:
+                        layerBody.setImageResource(item.getImageResId());
+                        layerBody.setVisibility(View.VISIBLE);
+                        break;
+                    case HAT:
+                        layerFace.setImageResource(item.getImageResId());
+                        layerFace.setVisibility(View.VISIBLE);
+                        break;
+                    case PET:
+                        layerPet.setImageResource(item.getImageResId());
+                        layerPet.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }
+            itemsAdapter.setEquippedItemIds(equippedItems);
         });
 
         //Item lists for current category TODO: check if current category
@@ -412,6 +457,14 @@ public class GuardianFragment extends Fragment {
 
         //Cannot afford
         showCannotAffordDialog(item);
+    }
+
+    private void clearGuardianImages() {
+        layerFace.setVisibility(View.INVISIBLE);
+        layerBody.setVisibility(View.INVISIBLE);
+        layerPet.setVisibility(View.INVISIBLE);
+        layerAura.setVisibility(View.INVISIBLE);
+        layerBackground.setVisibility(View.INVISIBLE);
     }
 
     private boolean isAlreadyEquipped(ItemsData item, GuardianData guardian) {

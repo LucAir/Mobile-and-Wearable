@@ -1,10 +1,17 @@
 package com.example.navigationbarstarter;
 
+import static android.content.ContentValues.TAG;
+
 import android.Manifest;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.example.navigationbarstarter.database.AppDatabase;
+import com.example.navigationbarstarter.database.item.InitializeItems;
+import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.ui.guardian.GuardianRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -16,28 +23,47 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.navigationbarstarter.databinding.ActivityMainBinding;
 
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     private static final String PREFS = "app_prefs";
-    private static final String KEY_INIT = "items_initialized";
+    AppDatabase appDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        appDatabase = AppDatabase.getInstance(getApplicationContext());
+        Executor executor = Executors.newSingleThreadExecutor();
+        GuardianRepository repo = new GuardianRepository(getApplicationContext());
+
+        //Getting user preferences to understand if some items have been added to list and pull eventually
+        SharedPreferences preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
+        int itemsVersion = preferences.getInt("items_version", 0);
+
+        //TEST
+        Log.d("MainTest", "MainActivity started");
+
+        executor.execute(() -> {
+            int count = appDatabase.itemsDataDao().getItemsCount();
+            Log.d("MainActivityTest","Number of element: " + count);
+            if (count == 0 || itemsVersion < InitializeItems.ITEM_VERSION) {
+                Log.d("MainActivityTest", "Initializing items...");
+                appDatabase.itemsDataDao().insertItems(InitializeItems.initializeCollectiblesForUser());
+
+                //Save new version
+                preferences.edit().putInt("items_version", InitializeItems.ITEM_VERSION).apply();
+            } else {
+                Log.d("MainActivityTest", "Items already up-to-date. Skipping insert.");
+            }
+        });
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        //TODO: check, maybe this line can be avoided, and use only initializeItem (put an if around initializeItem)
-        boolean initialized = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_INIT, false);
-
-        //Check if the list of item is already in the db. If need load it, otherwise skip
-        GuardianRepository repo = new GuardianRepository(getApplicationContext());
-        repo.initializeItemsIfNeeded(() -> {
-            runOnUiThread(() -> {
-                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_INIT, true).apply();
-            });
-        });
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each

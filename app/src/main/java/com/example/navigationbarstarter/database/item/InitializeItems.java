@@ -1,20 +1,27 @@
 package com.example.navigationbarstarter.database.item;
 
 import com.example.navigationbarstarter.R;
+import com.example.navigationbarstarter.ui.guardian.GuardianRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InitializeItems {
 
-    public static List<ItemsData> initializeCollectiblesForUser() {
-        List<ItemsData> itemsDataList = new ArrayList<>();
+    //Need to tell application to pull new item from list, when are needed
+    public static final int ITEM_VERSION = 1;
 
+    public static List<ItemsData> initializeCollectiblesForUser() {
+
+        List<ItemsData> itemsDataList = new ArrayList<>();
+        itemsDataList.addAll(initializeHat());
+        itemsDataList.addAll(initializeTshirt());
+        itemsDataList.addAll(initializePet());
         return itemsDataList;
     }
 
     //Constructor to initialize hat
-    private static List<ItemsData> initiliazeHat() {
+    private static List<ItemsData> initializeHat() {
         List<ItemsData> hatList = new ArrayList<>();
 
         ItemsData noHat = new ItemsData("Regular Head", Rarity.COMMON, 100, Type.HAT, R.drawable.common_hat_head);
@@ -54,6 +61,8 @@ public class InitializeItems {
         tshirtList.add(milanTshirt);
         tshirtList.add(redbullTshirt);
         tshirtList.add(mercedesTshirt);
+        tshirtList.add(superman);
+        tshirtList.add(supermario);
 
         return tshirtList;
     }
@@ -62,6 +71,7 @@ public class InitializeItems {
         List<ItemsData> petList = new ArrayList<>();
 
         ItemsData dragonPet = new ItemsData("Dragon", Rarity.RARE,10000, Type.PET, R.drawable.rare_pet_dragon);
+        petList.add(dragonPet);
         return petList;
     }
 }

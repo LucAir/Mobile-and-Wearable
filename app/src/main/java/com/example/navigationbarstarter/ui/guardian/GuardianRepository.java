@@ -1,6 +1,9 @@
 package com.example.navigationbarstarter.ui.guardian;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
+import android.util.Log;
 
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
@@ -35,18 +38,6 @@ public class GuardianRepository {
         itemsDataDao = db.itemsDataDao();
         guardianDataDao = db.guardianDataDao();
         userDataDao = db.userDataDao();
-    }
-
-    //The callback here is used to update then user preferences, so the next time we don't call this method
-    public void initializeItemsIfNeeded(final Runnable callback) {
-        executor.execute(() -> {
-            int count = itemsDataDao.getItemsCount();
-            if (count == 0) {
-                List<ItemsData> items = InitializeItems.initializeCollectiblesForUser();
-                itemsDataDao.insertItems(items);
-            }
-            if (callback != null) callback.run();
-        });
     }
 
     public void insertGuardian(final GuardianData guardianData, final CallbackLong callback) {
