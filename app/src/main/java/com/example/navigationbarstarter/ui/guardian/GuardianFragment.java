@@ -166,11 +166,8 @@ public class GuardianFragment extends Fragment {
         chipLegendary = view.findViewById(R.id.chip_legendary);
 
         //Guardian layer
-        layerBackground = view.findViewById(R.id.layer_background);
-        layerAura = view.findViewById(R.id.layer_aura);
-        layerFace = view.findViewById(R.id.layer_face);
-        layerBody = view.findViewById(R.id.layer_body);
-        layerPet = view.findViewById(R.id.layer_pet);
+//        layerBackground = view.findViewById(R.id.layer_background);
+//        layerPet = view.findViewById(R.id.layer_pet);
 
         //SetUp everything
         setupCategoryButtons();

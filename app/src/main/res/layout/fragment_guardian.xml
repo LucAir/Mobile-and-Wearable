@@ -136,84 +136,6 @@
     </LinearLayout>
 
     <!-- GUARDIAN PREVIEW (Layered Character) -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/card_guardian_preview"
-        android:layout_width="0dp"
-        android:layout_height="220dp"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
-        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/top_bar">
-
-        <FrameLayout
-            android:id="@+id/guardian_preview_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/bg_guardian_preview">
-
-            <!-- LAYER 0: Background (furthest back) - INVISIBLE by default -->
-            <ImageView
-                android:id="@+id/layer_background"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Background layer"
-                android:scaleType="centerCrop"
-                android:visibility="gone" />
-
-            <!-- LAYER 1: Aura (glow around character) - INVISIBLE by default -->
-            <ImageView
-                android:id="@+id/layer_aura"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Aura layer"
-                android:scaleType="centerInside"
-                android:visibility="gone" />
-
-            <!-- LAYER 2: Base Face (ALWAYS VISIBLE - default character) -->
-            <ImageView
-                android:id="@+id/layer_face"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Base character face"
-                android:scaleType="centerInside"
-                android:src="@drawable/common_hat_head"
-                android:visibility="visible" />
-
-            <!-- LAYER 3: Body/Shirt (clothing) - INVISIBLE by default -->
-            <ImageView
-                android:id="@+id/layer_body"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Body layer"
-                android:scaleType="centerInside"
-                android:visibility="gone" />
-
-            <!-- LAYER 4: Hat (on top of head) - INVISIBLE by default -->
-            <ImageView
-                android:id="@+id/layer_hat"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Hat layer"
-                android:scaleType="centerInside"
-                android:visibility="gone" />
-
-            <!-- LAYER 5: Pet (floating companion) - INVISIBLE by default -->
-            <ImageView
-                android:id="@+id/layer_pet"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_gravity="bottom|end"
-                android:layout_marginEnd="12dp"
-                android:layout_marginBottom="12dp"
-                android:contentDescription="Pet layer"
-                android:scaleType="centerInside"
-                android:visibility="gone" />
-
-        </FrameLayout>
-
-    </androidx.cardview.widget.CardView>
 
     <!-- Rarity Filter Chips -->
     <HorizontalScrollView
@@ -221,12 +143,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
         android:scrollbars="none"
         app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/card_guardian_preview">
+        tools:layout_editor_absoluteY="317dp">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group_rarity"
@@ -323,5 +244,29 @@
             android:textSize="16sp" />
 
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="114dp"
+        android:layout_height="136dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.101"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.304"
+        app:srcCompat="@drawable/inter_pet" />
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="234dp"
+        android:layout_height="414dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.451"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/inter_suit" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
