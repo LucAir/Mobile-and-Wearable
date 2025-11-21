@@ -99,9 +99,6 @@ public class GuardianRepository {
 
     private void applyEquip(GuardianData guardianData, ItemsData itemsData) {
         switch (itemsData.getType()) {
-            case HAT:
-                guardianData.setEquippedHat(itemsData.getId());
-                break;
 
             case TSHIRT:
                 guardianData.setEquippedTshirt(itemsData.getId());
@@ -113,10 +110,6 @@ public class GuardianRepository {
 
             case BACKGROUND:
                 guardianData.setEquippedBackground(itemsData.getId());
-                break;
-
-            case AURA:
-                guardianData.setEquippedAura(itemsData.getId());
                 break;
         }
     }

@@ -11,7 +11,6 @@ public class ItemsData {
     @PrimaryKey(autoGenerate = true)
     private long id;
 
-    //Magic hat ..
     @NonNull
     @ColumnInfo(name = "name")
     private String name;
@@ -19,9 +18,6 @@ public class ItemsData {
     @NonNull
     @ColumnInfo(name = "rarity")
     private Rarity rarity;
-
-//    @ColumnInfo(name = "unlocked")
-//    private boolean unlocked;
 
     @ColumnInfo(name = "price_to_unlock")
     private long priceToUnlock;
