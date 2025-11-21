@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +41,6 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,9 +63,8 @@ public class GuardianFragment extends Fragment {
     private ImageView layerBackground, layerAura, layerFace, layerBody, layerPet;
 
     //Views -> guardian layered
-    private MaterialButton btnBackground, btnBody, btnTshirt, btnHat, btnAura, btnPet;
+    private MaterialButton btnBackground, btnTshirt, btnHat, btnAura, btnPet;
 
-    private TextView txtCategoryTitle;
     private ProgressBar progressBar;
 
     //Log user token
@@ -106,15 +105,6 @@ public class GuardianFragment extends Fragment {
     private long userId;
     private long guardianId;
     private long userToken;
-
-    //Categories in order to display on the right side bar
-    private final List<Type> CATEGORY_ORDER = Arrays.asList(
-            HAT,
-            TSHIRT,
-            PET,
-            AURA,
-            BACKGROUND
-    );
 
     private Map<Long, ItemsData> itemsMap = new HashMap<>();
     private List<Long> unlockedItemIds = new ArrayList<>();
@@ -194,6 +184,9 @@ public class GuardianFragment extends Fragment {
 
         //Load user token
         loadUserToken();
+        loadDefaultGuardianItems();
+
+        Log.d("USER-TOKEN", "NUMBER-TOKEN: " + userToken);
     }
 
     private void initialize(Context context) {
@@ -347,11 +340,9 @@ public class GuardianFragment extends Fragment {
 
         });
 
-        //Item lists for current category TODO: check if current category
+        //Item lists for current category
         viewModel.getItemsListLiveData().observe(getViewLifecycleOwner(), items -> {
-           if (items!= null) {
-               filterAndDisplayItems(items);
-           }
+           if (items!= null) filterAndDisplayItems(items);
         });
 
         //User unlocked items
@@ -382,6 +373,93 @@ public class GuardianFragment extends Fragment {
         });
     }
 
+    private void loadDefaultGuardianItems() {
+        GuardianData guardian = viewModel.getGuardianLiveData().getValue();
+        if (guardian == null) return;
+
+        executor.execute(() -> {
+            // Fetch item IDs from database
+            long defaultHatId = itemsDataDao.getBaseItemId("common_hat_head");
+            long defaultTshirtId = itemsDataDao.getBaseItemId("common_tshirt_grayhoodie");
+            long defaultPetId = itemsDataDao.getBaseItemId("rare_pet_dragon");
+
+            // Prepare equipped items list
+            List<Long> equippedItems = new ArrayList<>();
+
+            // Hats
+            long hatId = guardian.getEquippedHat() != 0 ? guardian.getEquippedHat() : defaultHatId;
+            equippedItems.add(hatId);
+
+            // T-shirts
+            long tshirtId = guardian.getEquippedTshirt() != 0 ? guardian.getEquippedTshirt() : defaultTshirtId;
+            equippedItems.add(tshirtId);
+
+            // Pets
+            long petId = guardian.getEquippedPet() != 0 ? guardian.getEquippedPet() : defaultPetId;
+            equippedItems.add(petId);
+
+            // Background / Aura
+            if (guardian.getEquippedBackground() != 0) {
+                equippedItems.add(guardian.getEquippedBackground());
+            }
+            if (guardian.getEquippedAura() != 0) {
+                equippedItems.add(guardian.getEquippedAura());
+            }
+
+            // Post back to main thread to update UI
+            requireActivity().runOnUiThread(() -> {
+                // Update preview images
+                setEquippedItemHat(hatId);
+                setEquippedTshirt(tshirtId);
+                setEquippedPet(petId);
+                if (guardian.getEquippedBackground() != 0) setEquippedBackground(guardian.getEquippedBackground());
+                if (guardian.getEquippedAura() != 0) setEquippedAura(guardian.getEquippedAura());
+
+                // Update ViewModel TODO: CREATE METHODS:
+//                viewModel.setEquippedItems(equippedItems);
+                updateGuardianPreview();
+            });
+        });
+    }
+
+    // Fix method signatures and type
+    private void setEquippedItemHat(long itemId) {
+        ItemsData item = itemsMap.get(itemId);
+        if (item != null) {
+            layerFace.setImageResource(item.getImageResId());
+            layerFace.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setEquippedTshirt(long itemId) {
+        ItemsData item = itemsMap.get(itemId);
+        if (item != null) {
+            layerBody.setImageResource(item.getImageResId());
+            layerBody.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setEquippedPet(long itemId) {
+        ItemsData item = itemsMap.get(itemId);
+        if (item != null) {
+            layerPet.setImageResource(item.getImageResId());
+            layerPet.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setEquippedBackground(long itemId) {
+        ItemsData item = itemsMap.get(itemId);
+        if (item != null) {
+            layerBackground.setImageResource(item.getImageResId());
+            layerBackground.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setEquippedAura(long itemId) {
+        ItemsData item = itemsMap.get(itemId);
+        if (item != null) layerAura.setImageResource(item.getImageResId());
+    }
+
     private void updateGuardianPreview() {
 
         //Safety checks
@@ -403,22 +481,27 @@ public class GuardianFragment extends Fragment {
                 case BACKGROUND:
                     layerBackground.setImageResource(item.getImageResId());
                     layerBackground.setVisibility(View.VISIBLE);
+                    Log.d("GuardianPreview", "Background set and made visible");
                     break;
                 case AURA:
                     layerAura.setImageResource(item.getImageResId());
                     layerAura.setVisibility(View.VISIBLE);
+                    Log.d("GuardianPreview", "Aura set and made visible");
                     break;
                 case TSHIRT:
                     layerBody.setImageResource(item.getImageResId());
                     layerBody.setVisibility(View.VISIBLE);
+                    Log.d("GuardianPreview", "Body/Tshirt set and made visible");
                     break;
                 case HAT:
                     layerFace.setImageResource(item.getImageResId());
                     layerFace.setVisibility(View.VISIBLE);
+                    Log.d("GuardianPreview", "Hat/Face set and made visible");
                     break;
                 case PET:
                     layerPet.setImageResource(item.getImageResId());
                     layerPet.setVisibility(View.VISIBLE);
+                    Log.d("GuardianPreview", "Pet set and made visible");
                     break;
             }
         }
@@ -468,11 +551,13 @@ public class GuardianFragment extends Fragment {
     }
 
     private void clearGuardianImages() {
-        layerFace.setVisibility(View.INVISIBLE);
-        layerBody.setVisibility(View.INVISIBLE);
-        layerPet.setVisibility(View.INVISIBLE);
-        layerAura.setVisibility(View.INVISIBLE);
-        layerBackground.setVisibility(View.INVISIBLE);
+        layerFace.setVisibility(View.GONE);
+        layerBody.setVisibility(View.GONE);
+        layerPet.setVisibility(View.GONE);
+        layerAura.setVisibility(View.GONE);
+        layerBackground.setVisibility(View.GONE);
+
+        Log.d("GuardianPreview", "Guardian images cleared");
     }
 
     private boolean isAlreadyEquipped(ItemsData item, GuardianData guardian) {

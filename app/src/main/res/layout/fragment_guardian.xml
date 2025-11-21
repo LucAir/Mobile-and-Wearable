@@ -12,16 +12,15 @@
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical"
         android:background="#FFFFFF"
         android:elevation="4dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Token indicator -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -33,9 +32,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:textColor="#FFB300"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#FFB300"
             tools:text="50" />
 
         <View
@@ -47,9 +46,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Customize Guardian"
+            android:textColor="#212121"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#212121" />
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- RIGHT SIDEBAR: Vertical Category Buttons -->
@@ -144,54 +143,63 @@
         android:layout_margin="16dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="6dp"
-        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/category_sidebar">
+        app:layout_constraintTop_toBottomOf="@id/top_bar">
 
-        <!-- Layered Guardian Preview -->
         <FrameLayout
             android:id="@+id/guardian_preview_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/bg_guardian_preview">
 
-            <!-- Background Layer (furthest back) -->
+            <!-- LAYER 0: Background (furthest back) - INVISIBLE by default -->
             <ImageView
                 android:id="@+id/layer_background"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:contentDescription="Background layer"
                 android:scaleType="centerCrop"
-                android:visibility="invisible"
-                android:contentDescription="Background layer" />
+                android:visibility="gone" />
 
-            <!-- Aura Layer (behind character) -->
+            <!-- LAYER 1: Aura (glow around character) - INVISIBLE by default -->
             <ImageView
                 android:id="@+id/layer_aura"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:contentDescription="Aura layer"
                 android:scaleType="centerInside"
-                android:visibility="invisible"
-                android:contentDescription="Aura layer" />
+                android:visibility="gone" />
 
-            <!-- Base Character Face (always visible) -->
+            <!-- LAYER 2: Base Face (ALWAYS VISIBLE - default character) -->
             <ImageView
                 android:id="@+id/layer_face"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:contentDescription="Base character face"
                 android:scaleType="centerInside"
                 android:src="@drawable/common_hat_head"
-                android:contentDescription="Base character face" />
+                android:visibility="visible" />
 
-            <!-- Body/T-shirt Layer (on character body) -->
+            <!-- LAYER 3: Body/Shirt (clothing) - INVISIBLE by default -->
             <ImageView
                 android:id="@+id/layer_body"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:contentDescription="Body layer"
                 android:scaleType="centerInside"
-                android:visibility="invisible"
-                android:contentDescription="Body layer" />
+                android:visibility="gone" />
 
-            <!-- Pet Layer (companion, positioned at bottom-right) -->
+            <!-- LAYER 4: Hat (on top of head) - INVISIBLE by default -->
+            <ImageView
+                android:id="@+id/layer_hat"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Hat layer"
+                android:scaleType="centerInside"
+                android:visibility="gone" />
+
+            <!-- LAYER 5: Pet (floating companion) - INVISIBLE by default -->
             <ImageView
                 android:id="@+id/layer_pet"
                 android:layout_width="70dp"
@@ -199,41 +207,41 @@
                 android:layout_gravity="bottom|end"
                 android:layout_marginEnd="12dp"
                 android:layout_marginBottom="12dp"
+                android:contentDescription="Pet layer"
                 android:scaleType="centerInside"
-                android:visibility="invisible"
-                android:contentDescription="Pet layer" />
+                android:visibility="gone" />
 
         </FrameLayout>
 
     </androidx.cardview.widget.CardView>
 
-    <!-- Rarity Filter Chips (Horizontal) -->
+    <!-- Rarity Filter Chips -->
     <HorizontalScrollView
         android:id="@+id/rarity_scroll"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
         android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/card_guardian_preview"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/category_sidebar">
+        app:layout_constraintTop_toBottomOf="@id/card_guardian_preview">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group_rarity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:selectionRequired="false">
+            app:selectionRequired="false"
+            app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_all"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All"
-                android:checked="true" />
+                android:checked="true"
+                android:text="All" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_common"
@@ -267,11 +275,11 @@
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
         android:padding="8dp"
-        tools:listitem="@layout/item_guardian"
-        app:layout_constraintTop_toBottomOf="@id/rarity_scroll"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/category_sidebar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/category_sidebar" />
+        app:layout_constraintTop_toBottomOf="@id/rarity_scroll"
+        tools:listitem="@layout/item_guardian" />
 
     <!-- Loading Indicator -->
     <ProgressBar
@@ -279,10 +287,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         app:layout_constraintBottom_toBottomOf="@id/items_recycler_view"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/category_sidebar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         tools:visibility="visible" />
 
     <!-- Empty State -->
@@ -290,13 +298,13 @@
         android:id="@+id/empty_state"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         app:layout_constraintBottom_toBottomOf="@id/items_recycler_view"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/category_sidebar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/items_recycler_view"
         tools:visibility="visible">
 
         <TextView
@@ -311,8 +319,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="No items available"
-            android:textSize="16sp"
-            android:textColor="#757575" />
+            android:textColor="#757575"
+            android:textSize="16sp" />
 
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

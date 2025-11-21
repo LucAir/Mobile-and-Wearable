@@ -34,4 +34,7 @@ public interface ItemsDataDao {
 
     @Query("SELECT * FROM item")
     List<ItemsData> getAllItems();
+
+    @Query("SELECT id FROM item WHERE name = :itemName")
+    long getBaseItemId(String itemName);
 }

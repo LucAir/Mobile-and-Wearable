@@ -1,7 +1,5 @@
 package com.example.navigationbarstarter;
 
-import static android.content.ContentValues.TAG;
-
 import android.Manifest;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -11,8 +9,6 @@ import android.util.Log;
 
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.item.InitializeItems;
-import com.example.navigationbarstarter.database.item.ItemsData;
-import com.example.navigationbarstarter.ui.guardian.GuardianRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,7 +19,6 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.navigationbarstarter.databinding.ActivityMainBinding;
 
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -39,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
 
         appDatabase = AppDatabase.getInstance(getApplicationContext());
         Executor executor = Executors.newSingleThreadExecutor();
-        GuardianRepository repo = new GuardianRepository(getApplicationContext());
 
         //Getting user preferences to understand if some items have been added to list and pull eventually
         SharedPreferences preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
