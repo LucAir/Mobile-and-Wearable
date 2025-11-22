@@ -57,7 +57,8 @@ public class GuardianData {
         return equippedSkin;
     }
 
-    public void setEquippedTshirt(long equippedTshirt) {
+    // CHANGE THIS METHOD
+    public void setEquippedSkin(long equippedSkin) {
         this.equippedSkin = equippedSkin;
     }
 

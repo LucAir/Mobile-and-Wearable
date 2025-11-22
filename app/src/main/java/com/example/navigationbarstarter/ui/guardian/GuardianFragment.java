@@ -1,21 +1,15 @@
 package com.example.navigationbarstarter.ui.guardian;
 
-import static com.example.navigationbarstarter.database.item.Type.AURA;
-import static com.example.navigationbarstarter.database.item.Type.BACKGROUND;
-import static com.example.navigationbarstarter.database.item.Type.HAT;
-import static com.example.navigationbarstarter.database.item.Type.PET;
-import static com.example.navigationbarstarter.database.item.Type.TSHIRT;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,21 +17,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserDataDao;
 import com.example.navigationbarstarter.database.guardian.GuardianData;
-import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
 import com.example.navigationbarstarter.database.item.ItemsData;
-import com.example.navigationbarstarter.database.item.ItemsDataDao;
-import com.example.navigationbarstarter.database.item.Rarity;
 import com.example.navigationbarstarter.database.item.Type;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -49,718 +38,340 @@ import java.util.concurrent.Executors;
 
 public class GuardianFragment extends Fragment {
 
-    /**
-     * GuardianFragment - complete fragment that:
-     *  - displays the guardian layered (background/body/tshirt/hat/aura/pet)
-     *  - shows a right sidebar of categories
-     *  - shows bottom grid of items for the selected category
-     *  - lets the user equip or buy items (via ViewModel)
-     */
-
     private GuardianViewModel viewModel;
 
-    //Guardian layer
-    private ImageView layerBackground, layerAura, layerFace, layerBody, layerPet;
-
-    //Views -> guardian layered
-    private MaterialButton btnBackground, btnTshirt, btnHat, btnAura, btnPet;
-
-    private ProgressBar progressBar;
-
-    //Log user token
+    // --- Layout Views ---
+    private View bottomDrawer;
+    private View btnToggleMenu;
+    private ImageView imgArrow;
+    private TextView tabCharacter, tabPet, tabBackground;
     private TextView tvUserTokens;
-
-    //Rarity filter
-    private ChipGroup chipGroupRarity;
-    private Chip chipAll, chipCommon, chipRare, chipLegendary;
-
-    /**
-     * RecyclerView -> view that allow to display a dynamic list (create elements when necessary)
-     * Also handles when items go out of the screen due to length of the list or just the scroll of it
-     * Every item of the list is inside a view Holder.
-     * ViewHolder -> is a wrap around a view that contains the layout for a single element in the list
-     * Adapter -> creates viewHolder object and set data for this view
-     * When we define an adapter we need to override 3 methods:
-     *  1)onCreateViewHolder -> called by ReciclerView whenever we need to create a new viewHolder
-     *                          Create the viewHolder and the corresponding view, but does not bind data
-     *  2)onBindViewHolder -> link data to the previously created viewHolder
-     *  3)getItemCount -> used to get dimension of the dataset -> used to determine when no more element
-     *                    can be visualized
-     *
-     *
-     */
     private RecyclerView recyclerItems;
     private GuardianItemAdapter itemsAdapter;
 
-    //Instantiate reference to database
-    AppDatabase db;
-    Executor executor;
-    ItemsDataDao itemsDataDao;
-    GuardianDataDao guardianDataDao;
-    UserDataDao userDataDao;
+    // --- Guardian Layers (The Preview) ---
+    private ImageView layerBackground, layerAura, layerFace, layerBody, layerPet;
 
-    //Simple state
-    private Type selectedType = HAT;
-    private Rarity selectedRarity = null;
-    private long userId;
-    private long guardianId;
-    private long userToken;
+    // --- State Variables (Fixed Missing Variables) ---
+    private boolean isMenuOpen = false;
+    private Type selectedType = Type.TSHIRT; // Default to Character (Body)
 
-    private Map<Long, ItemsData> itemsMap = new HashMap<>();
+    private long guardianId = -1;
+    private long userId = -1;
+    private long userToken = 0;
+
+    // Helper lists/maps to manage logic
     private List<Long> unlockedItemIds = new ArrayList<>();
+    private Map<Long, ItemsData> itemsMap = new HashMap<>();
 
-    public GuardianFragment() {
-
-    }
+    // --- Database Helpers ---
+    private UserDataDao userDataDao;
+    private Executor executor;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //Initialize values for db
-        initialize(requireContext());
+        // Initialize DB access
+        AppDatabase db = AppDatabase.getInstance(requireContext());
+        userDataDao = db.userDataDao();
+        executor = Executors.newSingleThreadExecutor();
 
-        //Get User data from shared preferences
-        getUserDataFromSharedPreferences();
-
-        //Initialize viewModel
+        // Initialize ViewModel
         viewModel = new ViewModelProvider(this).get(GuardianViewModel.class);
+
+        // Load User Data (ID and GuardianID) from SharedPreferences
+        getUserDataFromSharedPreferences();
     }
 
-    //Inflates the UI layout
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstance) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstance) {
         return inflater.inflate(R.layout.fragment_guardian, container, false);
     }
 
-    /**
-     * - Initialize UI views
-     * - Configures RecyclerView and Tabs
-     * - Subscribes to LiveData
-     * - Starts loading guardian data from DB
-     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        //Find views
+        // 1. Find Views
+        bottomDrawer = view.findViewById(R.id.bottom_drawer);
+        btnToggleMenu = view.findViewById(R.id.btn_toggle_menu);
+        imgArrow = view.findViewById(R.id.img_arrow);
+
+        tabCharacter = view.findViewById(R.id.tab_character);
+        tabPet = view.findViewById(R.id.tab_pet);
+        tabBackground = view.findViewById(R.id.tab_background);
+
         tvUserTokens = view.findViewById(R.id.tv_user_tokens);
         recyclerItems = view.findViewById(R.id.items_recycler_view);
-        progressBar = view.findViewById(R.id.progress_bar);
 
-        //Category buttons
-        btnHat = view.findViewById(R.id.btn_hat);
-        btnTshirt = view.findViewById(R.id.btn_tshirt);
-        btnAura = view.findViewById(R.id.btn_aura);
-        btnBackground = view.findViewById(R.id.btn_background);
-        btnPet = view.findViewById(R.id.btn_pet);
+        // Layers
+        layerBackground = view.findViewById(R.id.layer_background);
+        layerAura = view.findViewById(R.id.layer_aura);
+        layerBody = view.findViewById(R.id.layer_body);
+        layerFace = view.findViewById(R.id.layer_face);
+        layerPet = view.findViewById(R.id.layer_pet);
 
-        //Rarity chips
-        chipGroupRarity = view.findViewById(R.id.chip_group_rarity);
-        chipAll = view.findViewById(R.id.chip_all);
-        chipCommon = view.findViewById(R.id.chip_common);
-        chipRare = view.findViewById(R.id.chip_rare);
-        chipLegendary = view.findViewById(R.id.chip_legendary);
-
-        //Guardian layer
-//        layerBackground = view.findViewById(R.id.layer_background);
-//        layerPet = view.findViewById(R.id.layer_pet);
-
-        //SetUp everything
-        setupCategoryButtons();
-        setupRarityChips();
+        // 2. Setup Logic
+        setupMenuToggle();
+        setupTabs();
         setUpItemsGrid();
-        observeViewModel();
 
-        //Loading variables
-        viewModel.loadGuardian(guardianId);
+        // --- FIX 3: Load the initial category of items (T-Shirts) ---
         viewModel.loadItems(selectedType);
 
-        //Load user token
-        loadUserToken();
-        loadDefaultGuardianItems();
+        // 3. Observe Data
+        observeViewModel();
 
-        Log.d("USER-TOKEN", "NUMBER-TOKEN: " + userToken);
-    }
+        // 4. Initial Layout State (Hide menu initially)
+        view.post(() -> {
+            // Get the height of the drawer
+            int height = 520;
 
-    private void initialize(Context context) {
-        db = AppDatabase.getInstance(context);
-        itemsDataDao = db.itemsDataDao();
-        guardianDataDao = db.guardianDataDao();
-        userDataDao = db.userDataDao();
-        executor = Executors.newSingleThreadExecutor();
-    }
+            // Move BOTH the drawer and the button down by the drawer's height
+            bottomDrawer.setTranslationY(height);
+            btnToggleMenu.setTranslationY(height);
 
-    /**
-     * Used to retrieve information of the user from the shared preferences
-     * We retrieve userId, guardianId and userToken
-     */
-    private void getUserDataFromSharedPreferences() {
-        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-        userId = sharedPreferences.getLong("userId", -1);
-
-        executor.execute(() -> {
-            if (userId != -1) {
-                guardianId = userDataDao.getGuardianId(userId);
-                userToken = userDataDao.getTokenNumber(userId);
-
-                //Update UI on main thread
-                requireActivity().runOnUiThread(this::updateTokenDisplay);
-            }
+            isMenuOpen = false;
         });
     }
 
-    /**
-     * Update UI relative to the visualization of the number of user token
-     */
-    private void updateTokenDisplay() {
-        if (tvUserTokens != null) {
-            tvUserTokens.setText(String.valueOf(userToken));
-        }
-    }
-
-    private void setupCategoryButtons() {
-        btnHat.setOnClickListener(v -> onCategorySelected(HAT));
-        btnTshirt.setOnClickListener(v -> onCategorySelected(TSHIRT));
-        btnAura.setOnClickListener(v -> onCategorySelected(AURA));
-        btnBackground.setOnClickListener(v -> onCategorySelected(BACKGROUND));
-        btnPet.setOnClickListener(v -> onCategorySelected(PET));
-
-        //Set initial selected state
-        updateCategoryButtonStates();
-    }
-
-    private void onCategorySelected(Type type) {
-        selectedType = type;
-        updateCategoryButtonStates();
-        viewModel.loadItems(type);
-    }
-
-    private void updateCategoryButtonStates() {
-        int selectedColor = Color.parseColor("#E3F2FD");
-        int defaultColor = Color.TRANSPARENT;
-
-        //Reset all buttons
-        btnHat.setBackgroundColor(selectedType == HAT ? selectedColor : defaultColor);
-        btnTshirt.setBackgroundColor(selectedType == TSHIRT ? selectedColor : defaultColor);
-        btnAura.setBackgroundColor(selectedType == AURA ? selectedColor : defaultColor);
-        btnBackground.setBackgroundColor(selectedType == BACKGROUND ? selectedColor : defaultColor);
-        btnPet.setBackgroundColor(selectedType == PET ? selectedColor : defaultColor);
-    }
-
-    private void setupRarityChips() {
-        chipGroupRarity.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) {
-                selectedRarity = null;
-            } else {
-                int checkedId = checkedIds.get(0);
-                if (checkedId == R.id.chip_all) {
-                    selectedRarity = null;
-                } else if (checkedId == R.id.chip_common) {
-                    selectedRarity = Rarity.COMMON;
-                } else if (checkedId == R.id.chip_rare) {
-                    selectedRarity = Rarity.RARE;
-                } else if (checkedId == R.id.chip_legendary) {
-                    selectedRarity = Rarity.LEGENDARY;
-                }
-            }
-            filterItems();
-        });
-    }
-
-    private void filterItems() {
-        List<ItemsData> currentItems = viewModel.getItemsListLiveData().getValue();
-        if (currentItems != null) {
-            filterAndDisplayItems(currentItems);
-        }
-    }
-
-    private void filterAndDisplayItems(List<ItemsData> items) {
-        if (selectedRarity == null) {
-            itemsAdapter.setItems(items);
-        } else {
-            List<ItemsData> filtered = new ArrayList<>();
-            for (ItemsData item : items) {
-                if (item.getRarity() == selectedRarity) {
-                    filtered.add(item);
-                }
-            }
-            itemsAdapter.setItems(filtered);
-        }
-    }
-
-    private void loadUserToken() {
-        executor.execute(() -> {
-            if (userId != -1) {
-                userToken = userDataDao.getTokenNumber(userId);
-                requireActivity().runOnUiThread(this::updateTokenDisplay);
-            }
-        });
-    }
-
-    private void setUpItemsGrid() {
-        itemsAdapter = new GuardianItemAdapter(new GuardianItemAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(ItemsData item) {
-                showItemDetails(item);
-            }
-
-            @Override
-            public void onPurchaseClick(ItemsData item) {
-                onItemActionClicked(item);
-            }
-        });
-        recyclerItems.setAdapter(itemsAdapter);
-        recyclerItems.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-    }
-
-    //Observers
+    // --- Missing Method Implemented ---
     private void observeViewModel() {
-        //Guardian entity (contains equipped ids)
+        // 1. Observe Guardian Data (to know what is equipped)
         viewModel.getGuardianLiveData().observe(getViewLifecycleOwner(), guardian -> {
-            if (guardian == null) return;
-            viewModel.loadEquippedItemsForGuardian(guardian.getGuardianId());
+            if (guardian != null) {
+                this.guardianId = guardian.getGuardianId();
+                viewModel.loadEquippedItemsForGuardian(guardianId);
+            }
         });
 
-        //Items map (all items by ID)
-        viewModel.getItemsMapLiveData().observe(getViewLifecycleOwner(), map -> {
-            this.itemsMap = map;
-            updateGuardianPreview();
-        });
-
-        //Equipped items
-        viewModel.getEquippedItemsLiveData().observe(getViewLifecycleOwner(), equippedItems -> {
-            updateGuardianPreview();
-
-        });
-
-        //Item lists for current category
+        // 2. Observe Items List (The items shown in the bottom drawer)
         viewModel.getItemsListLiveData().observe(getViewLifecycleOwner(), items -> {
-           if (items!= null) filterAndDisplayItems(items);
-        });
-
-        //User unlocked items
-        viewModel.getUserUnlockedItemsLiveData().observe(getViewLifecycleOwner(), unlockedItemIds -> {
-            if (unlockedItemIds != null) {
-                this.unlockedItemIds = unlockedItemIds;
-                itemsAdapter.setUnlockedItemsIds(unlockedItemIds);
+            if (items != null) {
+                itemsAdapter.setItems(items);
             }
         });
 
-        //Loading state
-        viewModel.getLoadingLiveData().observe(getViewLifecycleOwner(), isLoading -> {
-            progressBar.setVisibility(Boolean.TRUE.equals(isLoading) ? View.VISIBLE : View.GONE);
-        });
-
-        //Error messages
-        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
-            if (error != null && !error.isEmpty()) {
-                Toast.makeText(requireContext(), "Error: " + error, Toast.LENGTH_SHORT).show();
+        // 3. Observe Unlocked Items (To show locks or allow equip)
+        viewModel.getUserUnlockedItemsLiveData().observe(getViewLifecycleOwner(), unlockedIds -> {
+            if (unlockedIds != null) {
+                this.unlockedItemIds = unlockedIds;
+                itemsAdapter.setUnlockedItemsIds(unlockedIds);
             }
         });
 
-        //Success messages
-        viewModel.getSuccessMessageLiveData().observe(getViewLifecycleOwner(), msg -> {
-            if (msg != null && !msg.isEmpty()) {
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+        // 4. Observe Equipped Items (To draw the preview characters)
+        viewModel.getEquippedItemsLiveData().observe(getViewLifecycleOwner(), equippedIds -> {
+            if (equippedIds != null) {
+                updateGuardianPreview(equippedIds);
             }
         });
-    }
 
-    private void loadDefaultGuardianItems() {
-        GuardianData guardian = viewModel.getGuardianLiveData().getValue();
-        if (guardian == null) return;
-
-        executor.execute(() -> {
-            // Fetch item IDs from database
-            long defaultHatId = itemsDataDao.getBaseItemId("common_hat_head");
-            long defaultTshirtId = itemsDataDao.getBaseItemId("common_tshirt_grayhoodie");
-            long defaultPetId = itemsDataDao.getBaseItemId("rare_pet_dragon");
-
-            // Prepare equipped items list
-            List<Long> equippedItems = new ArrayList<>();
-
-            // Hats
-            long hatId = guardian.getEquippedHat() != 0 ? guardian.getEquippedHat() : defaultHatId;
-            equippedItems.add(hatId);
-
-            // T-shirts
-            long tshirtId = guardian.getEquippedTshirt() != 0 ? guardian.getEquippedTshirt() : defaultTshirtId;
-            equippedItems.add(tshirtId);
-
-            // Pets
-            long petId = guardian.getEquippedPet() != 0 ? guardian.getEquippedPet() : defaultPetId;
-            equippedItems.add(petId);
-
-            // Background / Aura
-            if (guardian.getEquippedBackground() != 0) {
-                equippedItems.add(guardian.getEquippedBackground());
+        // 5. Observe Items Map (Needed to look up images for the preview)
+        viewModel.getItemsMapLiveData().observe(getViewLifecycleOwner(), map -> {
+            if (map != null) {
+                this.itemsMap = map;
+                // If we have equipped items loaded, update preview now that map is ready
+                if (viewModel.getEquippedItemsLiveData().getValue() != null) {
+                    updateGuardianPreview(viewModel.getEquippedItemsLiveData().getValue());
+                }
             }
-            if (guardian.getEquippedAura() != 0) {
-                equippedItems.add(guardian.getEquippedAura());
-            }
-
-            // Post back to main thread to update UI
-            requireActivity().runOnUiThread(() -> {
-                // Update preview images
-                setEquippedItemHat(hatId);
-                setEquippedTshirt(tshirtId);
-                setEquippedPet(petId);
-                if (guardian.getEquippedBackground() != 0) setEquippedBackground(guardian.getEquippedBackground());
-                if (guardian.getEquippedAura() != 0) setEquippedAura(guardian.getEquippedAura());
-
-                // Update ViewModel TODO: CREATE METHODS:
-//                viewModel.setEquippedItems(equippedItems);
-                updateGuardianPreview();
-            });
         });
+
+        // 6. Observe Loading/Error/Messages
+        viewModel.getSuccessMessageLiveData().observe(getViewLifecycleOwner(), this::showSuccess);
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
     }
 
-    // Fix method signatures and type
-    private void setEquippedItemHat(long itemId) {
-        ItemsData item = itemsMap.get(itemId);
-        if (item != null) {
-            layerFace.setImageResource(item.getImageResId());
-            layerFace.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void setEquippedTshirt(long itemId) {
-        ItemsData item = itemsMap.get(itemId);
-        if (item != null) {
-            layerBody.setImageResource(item.getImageResId());
-            layerBody.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void setEquippedPet(long itemId) {
-        ItemsData item = itemsMap.get(itemId);
-        if (item != null) {
-            layerPet.setImageResource(item.getImageResId());
-            layerPet.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void setEquippedBackground(long itemId) {
-        ItemsData item = itemsMap.get(itemId);
-        if (item != null) {
-            layerBackground.setImageResource(item.getImageResId());
-            layerBackground.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void setEquippedAura(long itemId) {
-        ItemsData item = itemsMap.get(itemId);
-        if (item != null) layerAura.setImageResource(item.getImageResId());
-    }
-
-    private void updateGuardianPreview() {
-
-        //Safety checks
-        if (itemsMap == null || itemsMap.isEmpty()) return;
-        if (viewModel.getEquippedItemsLiveData().getValue() == null) return;
-
-        List<Long> equippedItems = viewModel.getEquippedItemsLiveData().getValue();
-
-        //Clear previous images
-        clearGuardianImages();
-
-        for (Long itemId : equippedItems) {
-            if (itemId == null || itemId == 0) continue;
-
-            ItemsData item = itemsMap.get(itemId);
-            if (item == null) continue;
-
-            switch (item.getType()) {
-                case BACKGROUND:
-                    layerBackground.setImageResource(item.getImageResId());
-                    layerBackground.setVisibility(View.VISIBLE);
-                    Log.d("GuardianPreview", "Background set and made visible");
-                    break;
-                case AURA:
-                    layerAura.setImageResource(item.getImageResId());
-                    layerAura.setVisibility(View.VISIBLE);
-                    Log.d("GuardianPreview", "Aura set and made visible");
-                    break;
-                case TSHIRT:
-                    layerBody.setImageResource(item.getImageResId());
-                    layerBody.setVisibility(View.VISIBLE);
-                    Log.d("GuardianPreview", "Body/Tshirt set and made visible");
-                    break;
-                case HAT:
-                    layerFace.setImageResource(item.getImageResId());
-                    layerFace.setVisibility(View.VISIBLE);
-                    Log.d("GuardianPreview", "Hat/Face set and made visible");
-                    break;
-                case PET:
-                    layerPet.setImageResource(item.getImageResId());
-                    layerPet.setVisibility(View.VISIBLE);
-                    Log.d("GuardianPreview", "Pet set and made visible");
-                    break;
-            }
-        }
-        itemsAdapter.setEquippedItemIds(equippedItems);
-    }
-
-    //Item click handling
-    private void onItemActionClicked(final ItemsData item) {
-        List<Long> unlocked = unlockedItemIds;
-        boolean isUnlocked = unlocked.contains(item.getId());
-
-        GuardianData guardian = viewModel.getGuardianLiveData().getValue();
-        if (guardian == null) {
-            Toast.makeText(requireContext(), "No guardian loaded", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        //Check if already equipped
-        boolean alreadyEquipped = isAlreadyEquipped(item, guardian);
-        if (alreadyEquipped) {
-            Toast.makeText(requireContext(), item.getName() + " is already equipped", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        //If unlocked -> equip
-        if (isUnlocked) {
-            viewModel.equipItem(guardianId, item, null);
-            Toast.makeText(requireContext(), "Equipped: " + item.getName(), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        //If not unlocked and free -> equip
-        if (item.getPriceToUnlock() <= 0) {
-            viewModel.equipItem(guardianId, item, null);
-            Toast.makeText(requireContext(), "Equipped: " + item.getName(), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        //If user can afford -> unlock and equip
-        if (item.getPriceToUnlock() <= userToken) {
-            showPurchaseConfirmation(item);
-            return;
-        }
-
-        //Cannot afford
-        showCannotAffordDialog(item);
-    }
-
-    private void clearGuardianImages() {
+    private void updateGuardianPreview(List<Long> equippedIds) {
+        // Reset/Hide layers first
         layerFace.setVisibility(View.GONE);
         layerBody.setVisibility(View.GONE);
         layerPet.setVisibility(View.GONE);
         layerAura.setVisibility(View.GONE);
         layerBackground.setVisibility(View.GONE);
 
-        Log.d("GuardianPreview", "Guardian images cleared");
+        if (itemsMap.isEmpty()) return;
+
+        for (Long id : equippedIds) {
+            ItemsData item = itemsMap.get(id);
+            if (item == null) continue;
+
+            switch (item.getType()) {
+                case TSHIRT:
+                    layerBody.setImageResource(item.getImageResId());
+                    layerBody.setVisibility(View.VISIBLE);
+                    break;
+                case PET:
+                    layerPet.setImageResource(item.getImageResId());
+                    layerPet.setVisibility(View.VISIBLE);
+                    break;
+                case BACKGROUND:
+                    layerBackground.setImageResource(item.getImageResId());
+                    layerBackground.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
+
+        // Update adapter so it can show the green circle on equipped items
+        itemsAdapter.setEquippedItemIds(equippedIds);
     }
 
-    private boolean isAlreadyEquipped(ItemsData item, GuardianData guardian) {
-        switch (item.getType()) {
-            case HAT: return guardian.getEquippedHat() == item.getId();
-            case TSHIRT: return guardian.getEquippedTshirt() == item.getId();
-            case PET: return guardian.getEquippedPet() == item.getId();
-            case AURA: return guardian.getEquippedAura() == item.getId();
-            case BACKGROUND: return guardian.getEquippedBackground() == item.getId();
-            default: return false;
+    private void getUserDataFromSharedPreferences() {
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        userId = sharedPreferences.getLong("userId", -1);
+
+        executor.execute(() -> {
+            if (userId != -1) {
+                long fetchedGuardianId = userDataDao.getGuardianId(userId);
+                userToken = userDataDao.getTokenNumber(userId);
+
+                requireActivity().runOnUiThread(() -> {
+                    this.guardianId = fetchedGuardianId;
+                    updateTokenDisplay();
+                    viewModel.loadGuardian(guardianId);
+                    viewModel.loadUserUnlockedItems(userId);
+                });
+            }
+        });
+    }
+
+    private void updateTokenDisplay() {
+        if (tvUserTokens != null) {
+            tvUserTokens.setText("💰 " + userToken);
         }
     }
 
-    private void showItemDetails(ItemsData item) {
+    private void setupMenuToggle() {
+        btnToggleMenu.setOnClickListener(v -> {
+            // Calculate the distance (height of the drawer)
+            float moveDistance = 530;
+
+            if (isMenuOpen) {
+                // --- CLOSE MENU (Go Down) ---
+
+                // 1. Move Drawer Down
+                bottomDrawer.animate()
+                        .translationY(moveDistance)
+                        .setDuration(300)
+                        .start();
+
+                // 2. Move Button Down (Follow the drawer)
+                btnToggleMenu.animate()
+                        .translationY(moveDistance)
+                        .setDuration(300)
+                        .start();
+
+                // 3. Rotate Arrow back to original
+                imgArrow.animate().rotation(0).setDuration(300).start();
+
+            } else {
+                // --- OPEN MENU (Go Up) ---
+
+                // 1. Move Drawer Up (Reset to original 0 position)
+                bottomDrawer.animate()
+                        .translationY(0)
+                        .setDuration(300)
+                        .start();
+
+                // 2. Move Button Up (Reset to original 0 position)
+                btnToggleMenu.animate()
+                        .translationY(0)
+                        .setDuration(300)
+                        .start();
+
+                // 3. Rotate Arrow to point down
+                imgArrow.animate().rotation(180).setDuration(300).start();
+            }
+
+            isMenuOpen = !isMenuOpen;
+        });
+    }
+
+    private void setupTabs() {
+        View.OnClickListener tabListener = v -> {
+            resetTabStyles();
+            ((TextView) v).setTextColor(Color.BLACK);
+            ((TextView) v).setTypeface(null, Typeface.BOLD);
+
+            int id = v.getId();
+            if (id == R.id.tab_character) {
+                selectedType = Type.TSHIRT;
+            } else if (id == R.id.tab_pet) {
+                selectedType = Type.PET;
+            } else if (id == R.id.tab_background) {
+                selectedType = Type.BACKGROUND;
+            }
+            viewModel.loadItems(selectedType);
+        };
+
+        tabCharacter.setOnClickListener(tabListener);
+        tabPet.setOnClickListener(tabListener);
+        tabBackground.setOnClickListener(tabListener);
+    }
+
+    private void resetTabStyles() {
+        int gray = Color.parseColor("#999999");
+        tabCharacter.setTextColor(gray);
+        tabCharacter.setTypeface(null, Typeface.NORMAL);
+        tabPet.setTextColor(gray);
+        tabPet.setTypeface(null, Typeface.NORMAL);
+        tabBackground.setTextColor(gray);
+        tabBackground.setTypeface(null, Typeface.NORMAL);
+    }
+
+    private void setUpItemsGrid() {
+        recyclerItems.setLayoutManager(
+                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        );
+
+        itemsAdapter = new GuardianItemAdapter(item -> handleItemClick(item));
+        recyclerItems.setAdapter(itemsAdapter);
+    }
+
+    private void handleItemClick(ItemsData item) {
         boolean isUnlocked = unlockedItemIds.contains(item.getId());
 
-        String message = "📦 " + item.getName() + "\n\n"
-                + "Rarity: " + item.getRarity() + "\n"
-                + "Type: " + item.getType() + "\n"
-                + (isUnlocked ? "✓ Unlocked" : "🔒 Locked - Cost: " + item.getPriceToUnlock() + " tokens");
+        // 1. If Unlocked OR Free -> Equip
+        if (isUnlocked || item.getPriceToUnlock() <= 0) {
+            viewModel.equipItem(guardianId, item, null);
+            return;
+        }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Item Details")
-                .setMessage(message)
-                .setPositiveButton("OK", (d, w) -> d.dismiss())
-                .show();
+        // 2. If Locked -> Prompt Purchase
+        showPurchaseDialog(item);
     }
 
-    private void showPurchaseConfirmation(ItemsData item) {
-        String message = "Purchase " + item.getName() + " for " + item.getPriceToUnlock() + " tokens?";
-
-        new MaterialAlertDialogBuilder(requireContext()).setTitle("Confirm Purchase")
-                .setMessage(message)
-                .setPositiveButton("Buy", (d, w) -> {
-                    viewModel.unlockAndEquipItem(item, userToken, item.getPriceToUnlock(), guardianId, userId);
-                    userToken -= item.getPriceToUnlock();
-                    updateTokenDisplay();
-                })
-                .setNegativeButton("Cancel", (d, w) -> d.dismiss())
-                .show();
-    }
-
-    private void showCannotAffordDialog(ItemsData item) {
-        long need = Math.max(0, item.getPriceToUnlock() - userToken);
-        String message = "🔒 " + item.getName() + "\n\n"
-                + "Rarity: " + item.getRarity() + "\n"
-                + "Cost: " + item.getPriceToUnlock() + " XP\n"
-                + "You have: " + userToken + " userToken\n\n"
-                + "You need " + need + " more userToken!";
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Not Enough userToken")
-                .setMessage(message)
-                .setPositiveButton("OK", (d, w) -> d.dismiss())
-                .show();
+    private void showPurchaseDialog(ItemsData item) {
+        if (userToken >= item.getPriceToUnlock()) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Unlock Item")
+                    .setMessage("Buy " + item.getName() + " for " + item.getPriceToUnlock() + " tokens?")
+                    .setPositiveButton("Unlock", (d, w) -> {
+                        viewModel.unlockAndEquipItem(item, userToken, item.getPriceToUnlock(), guardianId, userId);
+                        userToken -= item.getPriceToUnlock();
+                        updateTokenDisplay();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Insufficient Tokens")
+                    .setMessage("Cost: " + item.getPriceToUnlock() + "\nYou have: " + userToken)
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
     }
 
     private void showError(String message) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Error: " + message, Toast.LENGTH_SHORT).show();
-        }
+        if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     private void showSuccess(String message) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Success: " + message, Toast.LENGTH_SHORT).show();
-        }
+        if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    //---------------------------------------------------------------------
-    //CREATING THE RECYCLER VIEW ADAPTER OVERRIDING THE 3 METHODS
-    //---------------------------------------------------------------------
-    public class GuardianItemAdapter extends RecyclerView.Adapter<GuardianItemAdapter.ItemViewHolder> {
-        private List<ItemsData> items = new ArrayList<>();
-        private List<Long> unlockedItemIds = new ArrayList<>();
-        private List<Long> equippedItemIds = new ArrayList<>();
-        private final OnItemClickListener listener;
+    // --- Updated Adapter for Circular Layout ---
 
-        public interface OnItemClickListener {
-            void onItemClick(ItemsData item);
-            void onPurchaseClick(ItemsData item);
-        }
-
-        public GuardianItemAdapter(OnItemClickListener lister) {
-            this.listener = lister;
-        }
-
-        public void setItems(List<ItemsData> items) {
-            this.items = items != null ? items : new ArrayList<>();
-            notifyDataSetChanged();
-        }
-
-        public void setUnlockedItemsIds(List<Long> ids) {
-            this.unlockedItemIds = ids != null ? ids : new ArrayList<>();
-            notifyDataSetChanged();
-        }
-
-        public void setEquippedItemIds(List<Long> ids) {
-            this.equippedItemIds = ids != null ? ids : new ArrayList<>();
-            notifyDataSetChanged();
-        }
-
-        @NonNull
-        @Override
-        public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_guardian, parent, false);
-            return new ItemViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull GuardianItemAdapter.ItemViewHolder holder, int position) {
-            ItemsData item = items.get(position);
-            boolean isUnlocked = unlockedItemIds.contains(item.getId());
-            boolean isEquipped = equippedItemIds.contains(item.getId());
-            holder.bind(item, isUnlocked, isEquipped, listener);
-        }
-
-        @Override
-        public int getItemCount() {
-            return items.size();
-        }
-
-        static class ItemViewHolder extends RecyclerView.ViewHolder {
-            private final ImageView itemImage;
-            private final TextView itemName;
-            private final TextView itemPrice;
-            private final TextView itemRarity;
-            private final View rarityIndicator;
-            private final MaterialButton btnAction;
-            private final TextView badgeEquipped;
-            private final View lockOverlay;
-            private final TextView iconLocked;
-
-            public ItemViewHolder(@NonNull View itemView) {
-                super(itemView);
-                itemImage = itemView.findViewById(R.id.item_image);
-                itemName = itemView.findViewById(R.id.item_name);
-                itemPrice = itemView.findViewById(R.id.item_price);
-                itemRarity = itemView.findViewById(R.id.item_rarity);
-                rarityIndicator = itemView.findViewById(R.id.rarity_indicator);
-                btnAction = itemView.findViewById(R.id.btn_action);
-                badgeEquipped = itemView.findViewById(R.id.badge_equipped);
-                lockOverlay = itemView.findViewById(R.id.lock_overlay);
-                iconLocked = itemView.findViewById(R.id.icon_locked);
-            }
-
-            public void bind(ItemsData item,
-                             boolean isUnlocked,
-                             boolean isEquipped,
-                             OnItemClickListener listener) {
-                itemName.setText(item.getName());
-                itemPrice.setText(String.valueOf(item.getPriceToUnlock()));
-                itemRarity.setText(item.getRarity().toString());
-                itemImage.setImageResource(item.getImageResId());
-
-                //Set rarity color
-                int color = getRarityColor(item.getRarity());
-                rarityIndicator.setBackgroundColor(color);
-
-                //Handle equipped badge
-                if (isEquipped) {
-                    badgeEquipped.setVisibility(View.VISIBLE);
-                    btnAction.setText("Equipped");
-                    btnAction.setEnabled(false);
-                } else if (isUnlocked) {
-                    badgeEquipped.setVisibility(View.GONE);
-                    btnAction.setText("Equip");
-                    btnAction.setEnabled(true);
-                } else {
-                    badgeEquipped.setVisibility(View.GONE);
-                    btnAction.setText("Buy");
-                    btnAction.setEnabled(true);
-                }
-
-                //Handle lock overlay
-                if (!isUnlocked && item.getPriceToUnlock() > 0) {
-                    lockOverlay.setVisibility(View.VISIBLE);
-                    iconLocked.setVisibility(View.VISIBLE);
-                } else {
-                    lockOverlay.setVisibility(View.GONE);
-                    iconLocked.setVisibility(View.GONE);
-                }
-
-                itemView.setOnClickListener(v -> listener.onItemClick(item));
-                btnAction.setOnClickListener(v -> listener.onPurchaseClick(item));
-            }
-
-            private int getRarityColor(Rarity rarity) {
-                switch (rarity) {
-                    case COMMON:
-                        return Color.parseColor("#9E9E9E");
-                    case RARE:
-                        return Color.parseColor("#42A5F5");
-                    case LEGENDARY:
-                        return Color.parseColor("#FFD700");
-                    default:
-                        return Color.GRAY;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        tvUserTokens = null;
-        recyclerItems = null;
-    }
 }
-

@@ -1,20 +1,17 @@
 package com.example.navigationbarstarter.ui.guardian;
 
 import static android.content.ContentValues.TAG;
-
 import android.content.Context;
 import android.util.Log;
-
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
 import com.example.navigationbarstarter.database.UserDataDao;
 import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
-import com.example.navigationbarstarter.database.item.InitializeItems;
+import com.example.navigationbarstarter.database.item.InitializeItems; // Ensure this is imported
 import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.database.item.ItemsDataDao;
 import com.example.navigationbarstarter.database.item.Type;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -22,11 +19,6 @@ import java.util.concurrent.Executors;
 
 public class GuardianRepository {
 
-    /*ROLE:
-        - this is a layer located in the middle between db and the main thread
-        - uses Executor to run db calls in the background (not on the main thread)
-        - we pass callback to have a way to send results on the UI thread after background execution completes
-     */
     private final AppDatabase db;
     private final ItemsDataDao itemsDataDao;
     private final GuardianDataDao guardianDataDao;
@@ -38,6 +30,28 @@ public class GuardianRepository {
         itemsDataDao = db.itemsDataDao();
         guardianDataDao = db.guardianDataDao();
         userDataDao = db.userDataDao();
+
+        // --- ADDED: POPULATE DB ON FIRST LAUNCH ---
+        populateDatabaseIfEmpty();
+    }
+
+    private void populateDatabaseIfEmpty() {
+        executor.execute(() -> {
+            // Check if items table is empty
+            if (itemsDataDao.getAllItems().isEmpty()) {
+                Log.d(TAG, "Database is empty. Initializing default items...");
+
+                // --- FIX: Use the renamed method 'initializeCollectiblesForUser' ---
+                List<ItemsData> defaultItems = InitializeItems.initializeCollectiblesForUser();
+
+                // Insert them into the database
+                for (ItemsData item : defaultItems) {
+                    itemsDataDao.insertItem(item);
+                }
+
+                Log.d(TAG, "Items inserted successfully.");
+            }
+        });
     }
 
     public void insertGuardian(final GuardianData guardianData, final CallbackLong callback) {
@@ -54,7 +68,6 @@ public class GuardianRepository {
         });
     }
 
-    //Used to update the guardian
     public void equipItem(final long guardianId, final ItemsData item, final Runnable onDone) {
         executor.execute(() -> {
             GuardianData guardianData = guardianDataDao.getGuardianById(guardianId);
@@ -70,7 +83,6 @@ public class GuardianRepository {
 
     public void unlockAndEquipItem(ItemsData item, long userToken, long priceTokenItem, long guardianId, long userId) {
         executor.execute(() -> {
-            //Update user token and unlocked items
             UserData userData = db.userDataDao().getUserById(userId);
             long currentUserToken = userToken - priceTokenItem;
             List<Long> unlockedItems = userData.getUnlockedItems();
@@ -79,7 +91,6 @@ public class GuardianRepository {
             userData.setToken(currentUserToken);
             db.userDataDao().updateUser(userData);
 
-            //Updating guardian (adding the object to the used one)
             GuardianData guardianData = db.guardianDataDao().getGuardianById(guardianId);
             applyEquip(guardianData, item);
 
@@ -89,25 +100,20 @@ public class GuardianRepository {
 
     public void loadEquippedItems(long guardianId, CallbackListLong callback) {
         executor.execute(() -> {
-
             GuardianData gd = db.guardianDataDao().getGuardianById(guardianId);
             List<Long> equipped = (gd != null) ? gd.getEquippedItems() : new ArrayList<>();
-
             callback.onResult(equipped);
         });
     }
 
     private void applyEquip(GuardianData guardianData, ItemsData itemsData) {
         switch (itemsData.getType()) {
-
             case TSHIRT:
-                guardianData.setEquippedTshirt(itemsData.getId());
+                guardianData.setEquippedSkin(itemsData.getId());
                 break;
-
             case PET:
                 guardianData.setEquippedPet(itemsData.getId());
                 break;
-
             case BACKGROUND:
                 guardianData.setEquippedBackground(itemsData.getId());
                 break;
@@ -118,15 +124,7 @@ public class GuardianRepository {
         return db.itemsDataDao().getAllItems();
     }
 
-    public interface CallbackLong {
-        void onResult(long id);
-    }
-
-    public interface CallbackListLong {
-        void onResult(List<Long> id);
-    }
-
-    public interface CallbackListItems {
-        void onResults(List<ItemsData> items);
-    }
+    public interface CallbackLong { void onResult(long id); }
+    public interface CallbackListLong { void onResult(List<Long> id); }
+    public interface CallbackListItems { void onResults(List<ItemsData> items); }
 }
