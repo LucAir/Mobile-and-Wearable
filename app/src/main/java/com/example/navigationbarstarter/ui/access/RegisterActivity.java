@@ -490,8 +490,8 @@ public class RegisterActivity extends AppCompatActivity {
                 long guardianId = appDatabase.guardianDataDao().insert(guardian);
                 List<Long> unlockedItems = new ArrayList<>();
 
-                //Create new user with all fields
-                UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems);
+                //Create new user with all fields (100 is the number of token the user)
+                UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 100, null, null);
                 long resultOperation = appDatabase.userDataDao().insert(newUser);
                 //TODO: understand how to log
                 Log.e("NEW USER", "msg: "+ resultOperation);

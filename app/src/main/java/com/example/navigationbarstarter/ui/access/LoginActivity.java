@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 SharedPreferences preferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                 boolean isLoggedIn = preferences.getBoolean("isLoggedIn", false);
-                int userId = preferences.getInt("userId", -1);
+                long userId = preferences.getLong("userId", -1);
 
                 if (isLoggedIn && userId != -1) {
                     //Verify user still exists in the database
@@ -160,7 +160,7 @@ public class LoginActivity extends AppCompatActivity {
                 SharedPreferences preferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putBoolean("isLoggedIn", true);
-                editor.putInt("userId", user.getId());
+                editor.putLong("userId", user.getId());
                 editor.putString("username", user.getUsername());
                 editor.putLong("loginTime", System.currentTimeMillis());
                 editor.apply();

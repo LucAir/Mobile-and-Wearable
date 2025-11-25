@@ -6,6 +6,9 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
+import androidx.room.Update;
+
+import java.util.List;
 
 @Dao
 public interface UserDataDao {
@@ -24,7 +27,7 @@ public interface UserDataDao {
     UserData getUserByEmail(String email);
 
     @Query("SELECT * FROM userdata WHERE id = :id LIMIT 1")
-    UserData getUserById(int id);
+    UserData getUserById(long id);
 
     @Query("SELECT COUNT(*) FROM userdata")
     int getUserCount();
@@ -34,4 +37,14 @@ public interface UserDataDao {
 
     @Query("SELECT * FROM userdata WHERE username = :username")
     UserData getUserByUsername(String username);
+
+    //Update a user
+    @Update
+    void updateUser(UserData userData);
+
+    @Query("SELECT guardianId FROM userdata WHERE id = :userId")
+    long getGuardianId(long userId);
+
+    @Query("SELECT token FROM userdata WHERE id = :userId")
+    long getTokenNumber(long userId);
 }

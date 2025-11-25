@@ -1,15 +1,15 @@
 package com.example.navigationbarstarter.database;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-import com.example.navigationbarstarter.database.guardian.ItemsData;
-
 import java.util.List;
+
+import javax.xml.namespace.QName;
 
 @Entity(tableName = "userdata",
         //Creating index for fast access (retrieve user by email/username)
@@ -24,7 +24,7 @@ import java.util.List;
 public class UserData {
 
     @PrimaryKey(autoGenerate = true)
-    private int id;
+    private long id;
 
     @ColumnInfo(name = "name")
     private String name;
@@ -56,22 +56,34 @@ public class UserData {
     @ColumnInfo(name = "list_unlocked_items")
     List<Long> unlockedItems;
 
-    public UserData(@NonNull String username, @NonNull int age, @NonNull String email, @NonNull String password, @NonNull long guardianId, @NonNull List<Long> unlockedItems) {
-        this.name = name;
-        this.surname = surname;
+    @ColumnInfo(name = "token")
+    long token;
+
+    public UserData(@NonNull String username,
+                    @NonNull int age,
+                    @NonNull String email,
+                    @NonNull String password,
+                    @NonNull long guardianId,
+                    @NonNull List<Long> unlockedItems,
+                    long token,
+                    @Nullable String name,
+                    @Nullable String surname) {
         this.age = age;
         this.email = email;
         this.username = username;
         this.password = password;
         this.guardianId = guardianId;
         this.unlockedItems = unlockedItems;
+        this.token = token;
+        this.name = name;
+        this.surname = surname;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -132,6 +144,23 @@ public class UserData {
 
     public void setPassword(@NonNull String password) {
         this.password = password;
+    }
+
+    @NonNull
+    public List<Long> getUnlockedItems() {
+        return unlockedItems;
+    }
+
+    public void setUnlockedItems(@NonNull List<Long> unlockedItems) {
+        this.unlockedItems = unlockedItems;
+    }
+
+    public long getToken() {
+        return token;
+    }
+
+    public void setToken(long token) {
+        this.token = token;
     }
 }
 

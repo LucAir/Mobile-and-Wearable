@@ -2,6 +2,8 @@ package com.example.navigationbarstarter.database;
 
 import androidx.room.TypeConverter;
 
+import com.example.navigationbarstarter.database.item.Type;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,5 +31,15 @@ public class Converters {
             list.add(Long.parseLong(s));
         }
         return list;
+    }
+
+    @TypeConverter
+    public static String fromType(Type type) {
+        return type == null ? null : type.name();
+    }
+
+    @TypeConverter
+    public static Type toType(String type) {
+        return type == null ? null : Type.valueOf(type);
     }
 }

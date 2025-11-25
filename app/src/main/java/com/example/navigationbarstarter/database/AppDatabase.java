@@ -9,14 +9,14 @@ import androidx.room.TypeConverters;
 
 import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
-import com.example.navigationbarstarter.database.guardian.ItemsData;
-import com.example.navigationbarstarter.database.guardian.ItemsDataDao;
+import com.example.navigationbarstarter.database.item.ItemsData;
+import com.example.navigationbarstarter.database.item.ItemsDataDao;
 
 @Database(entities = {UserData.class,
                       ModeChange.class,
                       GuardianData.class,
                       ItemsData.class
-                      }, version = 5, exportSchema = false)
+                      }, version = 7, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

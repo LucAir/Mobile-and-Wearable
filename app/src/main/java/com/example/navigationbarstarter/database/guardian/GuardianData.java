@@ -5,6 +5,9 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity(tableName = "guardian")
 public class GuardianData {
 
@@ -16,18 +19,11 @@ public class GuardianData {
     @ColumnInfo(name = "name")
     private String name;
 
-    @ColumnInfo(name = "equipped_hat")
-    private long equippedHat;
+    @ColumnInfo(name = "equipped_skin")
+    private long equippedSkin;
 
-    @ColumnInfo(name = "equipped_T_shirt")
-    private long equippedTshirt;
-
-    //
     @ColumnInfo(name = "equipped_pet")
     private long equippedPet;
-
-    @ColumnInfo(name = "equipped_aura")
-    private long equippedAura;
 
     @NonNull
     @ColumnInfo(name = "equipped_background")
@@ -36,18 +32,8 @@ public class GuardianData {
     public GuardianData() {
         //Initialize with default values, then user can update it
         this.name = "Guardian";
-        this.equippedHat = 0;
-        this.equippedTshirt = 1;
-        this.equippedAura = 2;
         this.equippedBackground = 3;
-    }
-
-    public GuardianData(String name, long equippedHat, long equippedTshirt, long equippedAura, long equippedBackground) {
-        this.name = name;
-        this.equippedHat = equippedHat;
-        this.equippedTshirt = equippedTshirt;
-        this.equippedAura = equippedAura;
-        this.equippedBackground = equippedBackground;
+        this.equippedPet = 4;
     }
 
     public long getGuardianId() {
@@ -67,20 +53,12 @@ public class GuardianData {
         this.name = name;
     }
 
-    public long getEquippedHat() {
-        return equippedHat;
+    public long getEquippedSkin() {
+        return equippedSkin;
     }
 
-    public void setEquippedHat(long equippedHat) {
-        this.equippedHat = equippedHat;
-    }
-
-    public long getEquippedTshirt() {
-        return equippedTshirt;
-    }
-
-    public void setEquippedTshirt(long equippedTshirt) {
-        this.equippedTshirt = equippedTshirt;
+    public void setEquippedSkin(long equippedSkin) {
+        this.equippedSkin = equippedSkin;
     }
 
     public long getEquippedPet() {
@@ -91,19 +69,19 @@ public class GuardianData {
         this.equippedPet = equippedPet;
     }
 
-    public long getEquippedAura() {
-        return equippedAura;
-    }
-
-    public void setEquippedAura(long equippedAura) {
-        this.equippedAura = equippedAura;
-    }
-
     public long getEquippedBackground() {
         return equippedBackground;
     }
 
     public void setEquippedBackground(long equippedBackground) {
         this.equippedBackground = equippedBackground;
+    }
+
+    public List<Long> getEquippedItems() {
+        List<Long> equippedItems = new ArrayList<>();
+        equippedItems.add(this.equippedSkin);
+        equippedItems.add(this.equippedBackground);
+        equippedItems.add(this.equippedPet);
+        return equippedItems;
     }
 }

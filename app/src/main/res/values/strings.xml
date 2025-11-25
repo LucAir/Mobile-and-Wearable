@@ -18,4 +18,12 @@
     <string name="passwordLogin">Password</string>
     <string name="login">Login</string>
     <string name="don_t_have_an_account_register">Don\'t have an account? Register</string>
+    <string name="buy">Buy</string>
+    <string name="no_items_available">No Item Available</string>
+    <string name="rarity_legendary">Legendary\n</string>
+    <string name="rarity_rare">Rare\n</string>
+    <string name="rarity_common">Common\n</string>
+    <string name="rarity_all">All Rarity\n</string>
+    <string name="customize_guardian">Customize Guardian</string>
+    <string name="item_image">image\n</string>
 </resources>
