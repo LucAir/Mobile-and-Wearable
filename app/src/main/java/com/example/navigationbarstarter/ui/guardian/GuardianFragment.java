@@ -117,7 +117,7 @@ public class GuardianFragment extends Fragment {
         setupTabs();
         setUpItemsGrid();
 
-        // --- FIX 3: Load the initial category of items (T-Shirts) ---
+        // Load the initial category of items
         viewModel.loadItems(selectedType);
 
         // 3. Observe Data
@@ -136,7 +136,6 @@ public class GuardianFragment extends Fragment {
         });
     }
 
-    // --- Missing Method Implemented ---
     private void observeViewModel() {
         // 1. Observe Guardian Data (to know what is equipped)
         viewModel.getGuardianLiveData().observe(getViewLifecycleOwner(), guardian -> {
@@ -372,6 +371,5 @@ public class GuardianFragment extends Fragment {
         if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    // --- Updated Adapter for Circular Layout ---
 
 }

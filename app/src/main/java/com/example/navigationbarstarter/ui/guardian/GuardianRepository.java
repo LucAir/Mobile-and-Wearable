@@ -31,7 +31,6 @@ public class GuardianRepository {
         guardianDataDao = db.guardianDataDao();
         userDataDao = db.userDataDao();
 
-        // --- ADDED: POPULATE DB ON FIRST LAUNCH ---
         populateDatabaseIfEmpty();
     }
 
@@ -41,7 +40,6 @@ public class GuardianRepository {
             if (itemsDataDao.getAllItems().isEmpty()) {
                 Log.d(TAG, "Database is empty. Initializing default items...");
 
-                // --- FIX: Use the renamed method 'initializeCollectiblesForUser' ---
                 List<ItemsData> defaultItems = InitializeItems.initializeCollectiblesForUser();
 
                 // Insert them into the database
@@ -81,7 +79,7 @@ public class GuardianRepository {
         });
     }
 
-    public void unlockAndEquipItem(ItemsData item, long userToken, long priceTokenItem, long guardianId, long userId) {
+    public void unlockAndEquipItem(ItemsData item, long userToken, long priceTokenItem, long guardianId, long userId, final Runnable onDone) {
         executor.execute(() -> {
             UserData userData = db.userDataDao().getUserById(userId);
             long currentUserToken = userToken - priceTokenItem;
@@ -95,9 +93,13 @@ public class GuardianRepository {
             applyEquip(guardianData, item);
 
             db.guardianDataDao().updateGuardian(guardianData);
+
+            // Notify that the operation is complete
+            if (onDone != null) {
+                onDone.run();
+            }
         });
     }
-
     public void loadEquippedItems(long guardianId, CallbackListLong callback) {
         executor.execute(() -> {
             GuardianData gd = db.guardianDataDao().getGuardianById(guardianId);

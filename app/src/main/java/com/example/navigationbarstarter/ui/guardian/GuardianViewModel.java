@@ -40,7 +40,6 @@ public class GuardianViewModel extends AndroidViewModel {
         guardianRepository = new GuardianRepository(application.getApplicationContext());
         executor = Executors.newSingleThreadExecutor();
 
-        // --- FIX 1: Load the map immediately so the preview can be drawn ---
         loadAllItems();
     }
 
@@ -55,10 +54,11 @@ public class GuardianViewModel extends AndroidViewModel {
     public void equipItem(long guardianId, ItemsData item, Runnable onComplete) {
         loading.postValue(true);
         guardianRepository.equipItem(guardianId, item, () -> {
+            // DB is updated, force reload of the live data
+            loadEquippedItemsForGuardian(guardianId);
             loading.postValue(false);
-            if  (onComplete != null) {
+            if (onComplete != null) {
                 onComplete.run();
-                message.postValue("Equipped " + item.getName());
             }
         });
     }
@@ -89,7 +89,6 @@ public class GuardianViewModel extends AndroidViewModel {
         return equippedItemsLiveData;
     }
 
-    // --- FIX 2: Return 'itemsLive' which actually contains the data ---
     public MutableLiveData<List<ItemsData>> getItemsListLiveData(){
         return itemsLive;
     }
@@ -119,7 +118,15 @@ public class GuardianViewModel extends AndroidViewModel {
     public MutableLiveData<String> getSuccessMessageLiveData() { return message; }
 
     public void unlockAndEquipItem(ItemsData item, long userToken, long priceTokenItem, long guardianId, long userId) {
-        guardianRepository.unlockAndEquipItem(item, userToken, priceTokenItem, guardianId, userId);
+        loading.postValue(true);
+        // Pass a Runnable callback to know when DB finishes
+        guardianRepository.unlockAndEquipItem(item, userToken, priceTokenItem, guardianId, userId, () -> {
+            // 1. Reload equipped items so the preview updates instantly
+            loadEquippedItemsForGuardian(guardianId);
+            // 2. Reload unlocked items so the lock icon disappears instantly
+            loadUserUnlockedItems(userId);
+            loading.postValue(false);
+        });
     }
 
     // --- Helper Methods ---
