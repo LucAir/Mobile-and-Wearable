@@ -8,8 +8,12 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
+import com.example.navigationbarstarter.data.HeartRateVariability;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class HomeViewModel extends AndroidViewModel {
 
@@ -20,7 +24,7 @@ public class HomeViewModel extends AndroidViewModel {
     // Timer State
     private boolean isTimerRunning = false;
     private long accumulatedTime = 0; // Time tracked before the current "start"
-    private long lastStartTime = 0;   // Timestamp of the latest "start"
+    private long lastStartTime = 0;  // Timestamp of the latest "start"
 
     // Break Logic State
     private long lastBreakDismissTime = 0;
@@ -28,6 +32,12 @@ public class HomeViewModel extends AndroidViewModel {
 
     // Events for Fragment
     private final MutableLiveData<Boolean> showBreakDialogEvent = new MutableLiveData<>(false);
+
+    //Variable used for HRV
+    private final List<Integer> heartRateWindow = new ArrayList<>();
+    private static final int HRV_WINDOW_SIZE = 20;
+    private final MutableLiveData<Double> hrvLive = new MutableLiveData<>();
+
 
     public HomeViewModel(@NonNull Application application) {
         super(application);
@@ -110,6 +120,16 @@ public class HomeViewModel extends AndroidViewModel {
         // We let the Fragment observe the BPM to count the "3 consecutive"
         // because that logic is simpler in the UI layer or here.
         // Let's keep the "3 count" logic where it was, but we handle the "Snooze" check here.
+
+        //TODO: addins snnd ADDING HRV SETTINGS
+        heartRateWindow.add(bpm);
+        if (heartRateWindow.size() > HRV_WINDOW_SIZE) {
+            heartRateWindow.remove(0);
+        }
+         if (heartRateWindow.size() > 5) {
+             double rmssd = HeartRateVariability.computeRMSSD(heartRateWindow);
+             hrvLive.postValue(rmssd);
+         }
     }
 
     // Helper to check if we are allowed to show the dialog (5 min cooldown)
@@ -120,6 +140,10 @@ public class HomeViewModel extends AndroidViewModel {
 
     public void onBreakDialogDismissed() {
         lastBreakDismissTime = System.currentTimeMillis();
+    }
+
+    public LiveData<Double> getHRV() {
+        return  hrvLive;
     }
 
     @Override
