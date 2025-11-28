@@ -20,7 +20,6 @@ import javax.xml.namespace.QName;
             @Index(value = "email", unique = true)
         })
 
-//TODO: maybe add AGE for statistics?? Heart rate (more higher/lower -> adapt that to give better notification?)
 public class UserData {
 
     @PrimaryKey(autoGenerate = true)
