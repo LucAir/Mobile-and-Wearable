@@ -7,7 +7,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CSVHeartbeatSimulator {
 
@@ -21,22 +23,30 @@ public class CSVHeartbeatSimulator {
     private boolean isRunning = false;
     private Runnable currentRunnable;
 
+    public static Map<String, Integer> heartTime = new HashMap<>();
+
     public boolean loadCSV(InputStream csvInputStream) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream));
             String line;
             boolean firstLine = true;
             bpmList.clear();
+            heartTime.clear();
 
             while ((line = reader.readLine()) != null) {
-                if (firstLine) { firstLine = false; continue; } // skip header
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                } //skip header
                 String[] parts = line.split(",");
                 if (parts.length >= 2) {
                     try {
+                        String timestamp = parts[0].trim();
                         int bpm = Integer.parseInt(parts[1].trim());
                         bpmList.add(bpm);
+                        heartTime.put(timestamp, bpm);
                     } catch (NumberFormatException e) {
-                        // ignore malformed lines
+                        //ignore malformed lines
                     }
                 }
             }
