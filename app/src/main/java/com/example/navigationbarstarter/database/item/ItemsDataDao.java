@@ -37,4 +37,13 @@ public interface ItemsDataDao {
 
     @Query("SELECT id FROM item WHERE name = :itemName")
     long getBaseItemId(String itemName);
+
+    @Query("SELECT id FROM item WHERE type = 'TSHIRT' AND price_to_unlock = 0 LIMIT 1")
+    long getDefaultSkinId();
+
+    @Query("SELECT id FROM item WHERE type = 'PET' AND price_to_unlock = 0 LIMIT 1")
+    long getDefaultPetId();
+
+    @Query("SELECT id FROM item WHERE type = 'BACKGROUND' AND price_to_unlock = 0 LIMIT 1")
+    long getDefaultBackgroundId();
 }

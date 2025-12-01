@@ -30,10 +30,11 @@ public class GuardianData {
     private long equippedBackground;
 
     public GuardianData() {
-        //Initialize with default values, then user can update it
+        // Initialize with default values
         this.name = "Guardian";
-        this.equippedBackground = 3;
-        this.equippedPet = 4;
+        this.equippedSkin = 0;
+        this.equippedPet = 0;
+        this.equippedBackground = 0;
     }
 
     public long getGuardianId() {

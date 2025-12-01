@@ -54,7 +54,19 @@ public class GuardianRepository {
 
     public void insertGuardian(final GuardianData guardianData, final CallbackLong callback) {
         executor.execute(() -> {
+            // 1. Fetch the correct IDs for default items from the DB
+            long defaultSkinId = itemsDataDao.getDefaultSkinId();
+            long defaultPetId = itemsDataDao.getDefaultPetId();
+            long defaultBgId = itemsDataDao.getDefaultBackgroundId();
+
+            // 2. Assign them to the new Guardian
+            guardianData.setEquippedSkin(defaultSkinId);
+            guardianData.setEquippedPet(defaultPetId);
+            guardianData.setEquippedBackground(defaultBgId);
+
+            // 3. Insert into DB
             long id = guardianDataDao.insert(guardianData);
+
             if (callback != null) callback.onResult(id);
         });
     }

@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.example.navigationbarstarter.ui.guardian.GuardianRepository;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -65,6 +66,8 @@ public class RegisterActivity extends AppCompatActivity {
     private Runnable usernameValidationRunnable;
     private Runnable emailValidationRunnable;
 
+    private GuardianRepository guardianRepository;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +83,9 @@ public class RegisterActivity extends AppCompatActivity {
         mainHandler = new Handler(Looper.getMainLooper());
         validationHandler = new Handler(Looper.getMainLooper());
         appDatabase = AppDatabase.getInstance(this);
+
+
+        guardianRepository = new GuardianRepository(this);
 
         //Set up view
         initializeViews();
@@ -487,22 +493,33 @@ public class RegisterActivity extends AppCompatActivity {
 
                 //Creating a guardian with default items
                 GuardianData guardian = new GuardianData();
-                long guardianId = appDatabase.guardianDataDao().insert(guardian);
-                List<Long> unlockedItems = new ArrayList<>();
+                guardian.setName(username + "'s Guardian"); // Optional: set a default name
 
-                //Create new user with all fields (100 is the number of token the user)
-                UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 100, null, null);
-                long resultOperation = appDatabase.userDataDao().insert(newUser);
-                //TODO: understand how to log
-                Log.e("NEW USER", "msg: "+ resultOperation);
+                // Use the Repository to insert. This ensures default items (Skin/Pet/Bg) are set correctly.
+                guardianRepository.insertGuardian(guardian, guardianId -> {
 
-                //Check if activity is still alive
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
+                    // This callback runs AFTER the guardian is saved and defaults are set.
+                    // Now we can safely create the user.
 
-                //Registration successful
-                mainHandler.post(() -> handleRegistrationSuccess(resultOperation));
+                    List<Long> unlockedItems = new ArrayList<>();
+
+                    // Create new user with the valid guardianId we just got
+                    UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 100, null, null);
+
+                    // Insert the User into the database
+                    long resultOperation = appDatabase.userDataDao().insert(newUser);
+
+                    // Log for debugging
+                    Log.e("NEW USER", "msg: "+ resultOperation);
+
+                    // Check if activity is still alive before updating UI
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
+                    // Report success to the UI thread
+                    mainHandler.post(() -> handleRegistrationSuccess(resultOperation));
+                });
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

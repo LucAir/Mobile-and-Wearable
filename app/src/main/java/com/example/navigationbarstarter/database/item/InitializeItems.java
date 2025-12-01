@@ -25,7 +25,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Inter Jersey",
                 Rarity.RARE,
-                0,
+                100,
                 Type.TSHIRT,
                 R.drawable.inter_suit
         ));
