@@ -504,7 +504,7 @@ public class RegisterActivity extends AppCompatActivity {
                     List<Long> unlockedItems = new ArrayList<>();
 
                     // Create new user with the valid guardianId we just got
-                    UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 100, null, null);
+                    UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 4000, null, null);
 
                     // Insert the User into the database
                     long resultOperation = appDatabase.userDataDao().insert(newUser);

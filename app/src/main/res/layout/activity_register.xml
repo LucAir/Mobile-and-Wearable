@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:adroid="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/bg_gradient"
     android:gravity="center"
     android:padding="24dp">
@@ -52,7 +53,8 @@
                 android:id="@+id/etRegisterUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"/>
+                android:inputType="text"
+                android:textColor="#FFFFFF"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Age -->
@@ -69,7 +71,8 @@
                 android:id="@+id/etRegisterAge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number"/>
+                android:inputType="number"
+                android:textColor="#FFFFFF"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Email -->
@@ -80,13 +83,15 @@
             android:layout_marginBottom="16dp"
             android:hint="@string/email"
             android:textColorHint="#FFFFFF"
-            android:textColor="#FFFFFF">
+            android:textColor="#FFFFFF"
+            >
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegisterEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:textColor="#FFFFFF"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Password -->
@@ -122,7 +127,8 @@
                 android:id="@+id/etRegisterConfirmPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="#FFFFFF"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Progress Bar -->
