@@ -128,11 +128,9 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         if (isRunning) {
             btnStartStop.setText("Stop the section?");
             focusModeStatus.setText("Focus Mode: Active");
-            timerSubtitle.setText("/ focused");
         } else {
             btnStartStop.setText("Start a focus section?");
             focusModeStatus.setText(totalTime > 0 ? "Focus Mode: Paused" : "Focus Mode: Idle");
-            timerSubtitle.setText("/ paused");
         }
 
         // Update Timer Text
@@ -191,8 +189,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private void initializeViews() {
         focusModeStatus = binding.focusModeStatus;
         timerText = binding.timerText;
-        timerSubtitle = binding.timerSubtitle;
-        heartRateText = binding.heartRateText;
         timerProgress = binding.timerProgress;
         heartIcon = binding.heartIcon;
         heartbeatLine = binding.heartbeatLine;
@@ -203,7 +199,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     }
 
     private void updateHeartRateUI() {
-        heartRateText.setText(String.format(Locale.getDefault(), "%d BPM", currentHeartRate));
         adjustHeartbeatSpeed(currentHeartRate);
     }
 
