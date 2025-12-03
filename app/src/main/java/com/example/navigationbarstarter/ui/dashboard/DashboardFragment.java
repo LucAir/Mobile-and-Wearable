@@ -36,6 +36,8 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.android.material.tabs.TabItem;
+import com.google.android.material.tabs.TabLayout;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -65,6 +67,11 @@ public class DashboardFragment extends Fragment {
 
     private TreeMap<String, Integer> allHeartData;
 
+    private TabLayout tab;
+
+    private TabItem tb1, tb2, tb3;
+    private TextView txtFeature;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         DashboardViewModel dashboardViewModel =
@@ -77,10 +84,20 @@ public class DashboardFragment extends Fragment {
         View root = binding.getRoot();
 
         //Binding elements
-        candleChart = binding.candleChart;
-        heartRateChart = binding.heartRateChart;
+        candleChart = binding.candleStickChart;
+        heartRateChart = binding.lineChart;
+        tab = binding.tabLayout;
+        txtFeature = binding.txtFeature;
+
+        //INITIAL VISIBILITY on startup
+        heartRateChart.setVisibility(View.VISIBLE);
+        candleChart.setVisibility(View.INVISIBLE);
+        txtFeature.setVisibility(View.INVISIBLE);
+
 
         getUserIdFromSharedPreferences();
+
+        setUpListener();
 
         loadDataHeartBeat();
 
@@ -92,6 +109,38 @@ public class DashboardFragment extends Fragment {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
         this.userId = sharedPreferences.getLong("UserId", userId);
     }
+
+    private void setUpListener() {
+        tab.selectTab(tab.getTabAt(0));
+        tab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab t) {
+                switch (t.getPosition()) {
+                    case 0:
+                        heartRateChart.setVisibility(View.VISIBLE);
+                        candleChart.setVisibility(View.INVISIBLE);
+                        txtFeature.setVisibility(View.INVISIBLE);
+                        break;
+
+                    case 1:
+                        heartRateChart.setVisibility(View.INVISIBLE);
+                        candleChart.setVisibility(View.VISIBLE);
+                        txtFeature.setVisibility(View.INVISIBLE);
+                        break;
+
+                    case 2:
+                        heartRateChart.setVisibility(View.INVISIBLE);
+                        candleChart.setVisibility(View.INVISIBLE);
+                        txtFeature.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }
+
+            @Override public void onTabUnselected(TabLayout.Tab t) {}
+            @Override public void onTabReselected(TabLayout.Tab t) {}
+        });
+    }
+
 
 
     //TODO: change to a better hover
