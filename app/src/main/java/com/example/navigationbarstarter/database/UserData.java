@@ -58,6 +58,9 @@ public class UserData {
     @ColumnInfo(name = "token")
     long token;
 
+    @ColumnInfo(name = "profile_image_uri")
+    private String profileImageUri;
+
     public UserData(@NonNull String username,
                     @NonNull int age,
                     @NonNull String email,
@@ -66,7 +69,8 @@ public class UserData {
                     @NonNull List<Long> unlockedItems,
                     long token,
                     @Nullable String name,
-                    @Nullable String surname) {
+                    @Nullable String surname,
+                    @Nullable String profileImageUri) {
         this.age = age;
         this.email = email;
         this.username = username;
@@ -76,6 +80,7 @@ public class UserData {
         this.token = token;
         this.name = name;
         this.surname = surname;
+        this.profileImageUri = profileImageUri;
     }
 
     public long getId() {
@@ -160,6 +165,14 @@ public class UserData {
 
     public void setToken(long token) {
         this.token = token;
+    }
+
+    public String getProfileImageUri() {
+        return profileImageUri;
+    }
+
+    public void setProfileImageUri(String profileImageUri) {
+        this.profileImageUri = profileImageUri;
     }
 }
 

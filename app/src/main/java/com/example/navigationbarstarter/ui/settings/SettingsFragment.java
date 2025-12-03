@@ -4,7 +4,9 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,10 +15,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.collection.ObjectListKt;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.UserData;
 import com.example.navigationbarstarter.databinding.FragmentSettingsBinding;
 import com.example.navigationbarstarter.ui.access.LoginActivity;
@@ -27,14 +34,12 @@ import java.util.Objects;
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;
-
-    private Button btnLogout;
-
     private TextView settingsTitle;
     private ImageView ivProfileImage;
     private TextInputEditText etName, etSurname, etEmail, etUsername;
-    private Button btnChangePassword, btnSave;
-
+    private Button btnChangePassword, btnSave, btnLogout;
+    private ActivityResultLauncher<Intent> pickImageLauncher;
+    private Uri selectedImageUri; // store the selected URI
     private long userId;
 
     /*
@@ -51,6 +56,17 @@ public class SettingsFragment extends Fragment {
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        //Initialize image picker launcher
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if(result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
+                        selectedImageUri = result.getData().getData();
+                        ivProfileImage.setImageURI(selectedImageUri);
+                    }
+                }
+        );
+
         //Checking if the live variable has changed. If we have the value (UserData) use it to load information on UI
         settingsViewModel.getUserInfo().observe(getViewLifecycleOwner(), userData -> {
             if(userData == null) {
@@ -66,8 +82,6 @@ public class SettingsFragment extends Fragment {
                 etUsername.setError("Username already exists");
             }
         });
-
-        //
 
         //Setting bindings with xml
         setBinding();
@@ -103,6 +117,14 @@ public class SettingsFragment extends Fragment {
         etSurname.setText(userData.getSurname());
         etUsername.setText(userData.getUsername());
         etEmail.setText(userData.getEmail());
+
+        //Load profile picture
+        String imageUri = userData.getProfileImageUri();
+        if(imageUri != null && !imageUri.isEmpty()) {
+            ivProfileImage.setImageURI(Uri.parse(imageUri));
+        } else {
+            ivProfileImage.setImageResource(R.drawable.ic_default_avatar);
+        }
     }
 
     //Load userId from shared preferences
@@ -128,16 +150,25 @@ public class SettingsFragment extends Fragment {
 
         btnSave.setOnClickListener(v -> {
             //Getting field values
+            String newUri = selectedImageUri != null ? selectedImageUri.toString() : null;
             String newName = Objects.requireNonNull(etName.getText()).toString().trim();
             String newSurname = Objects.requireNonNull(etSurname.getText()).toString().trim();
             String newUsername = Objects.requireNonNull(etUsername.getText()).toString().trim();
 
             //Send data to ViewModel
-            settingsViewModel.updateUserFields(userId, newName, newSurname);
+            settingsViewModel.updateUserFields(userId, newName, newSurname, newUri);
 
             //Checking validity of Username -> MUST NOT BE an EQUAL username in the DB
-            settingsViewModel.checkUsernameUnique(newUsername);
+            settingsViewModel.isUsernameUniqueAndUpdate(userId, newUsername);
 
+            Toast.makeText(getContext(), "New settings saved successfully", Toast.LENGTH_SHORT).show();
+        });
+
+        //This is not a button, but works the same
+        ivProfileImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            pickImageLauncher.launch(intent);
         });
     }
 

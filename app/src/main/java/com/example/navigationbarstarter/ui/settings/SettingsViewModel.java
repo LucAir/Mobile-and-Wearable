@@ -29,8 +29,8 @@ public class SettingsViewModel extends AndroidViewModel {
      * and
      * post value inside the live variable
      */
-    public void checkUsernameUnique(String username) {
-        repository.isUsernameUnique(username, isUnique ->
+    public void isUsernameUniqueAndUpdate(long userId, String username) {
+        repository.isUsernameUniqueAndUpdate(userId, username, isUnique ->
                 usernameUniqueLiveData.postValue((boolean) isUnique));
     }
 
@@ -55,8 +55,8 @@ public class SettingsViewModel extends AndroidViewModel {
     /*
      * Used to update nullable fields
      */
-    public void updateUserFields(long id, String name, String surname) {
-        repository.updateUserFields(id, name, surname);
+    public void updateUserFields(long id, String name, String surname, String uri) {
+        repository.updateUserFields(id, name, surname, uri);
     }
 
 

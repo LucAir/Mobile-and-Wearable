@@ -30,20 +30,26 @@ public class SettingsRepository {
 
 
     //Check if the new username exists in the DB
-    public void isUsernameUnique(String username, ResultCallback callback) {
+    public void isUsernameUniqueAndUpdate(long userId, String username, ResultCallback callback) {
         executor.execute(() -> {
+            UserData userEdit = userDataDao.getUserById(userId);
             UserData user = userDataDao.getUserByUsername(username);
             boolean isUnique = (user == null);
+            if (isUnique) {
+                userEdit.setUsername(username);
+                userDataDao.updateUser(userEdit);
+            }
             callback.onResult(isUnique);
         });
     }
 
-    //Update user field like name and surname
-    public void updateUserFields(long userId, String name, String surname) {
+    //Update user field like name, surname, image
+    public void updateUserFields(long userId, String name, String surname, String uri) {
         executor.execute(() -> {
             UserData userData = userDataDao.getUserById(userId);
             userData.setName(name);
             userData.setSurname(surname);
+            userData.setProfileImageUri(uri);
             userDataDao.updateUser(userData);
         });
     }
@@ -51,20 +57,6 @@ public class SettingsRepository {
     public void insertOrUpdateImage( ResultCallback callback) {
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public interface ResultCallback<T> {
         void onResult(T isUnique);
