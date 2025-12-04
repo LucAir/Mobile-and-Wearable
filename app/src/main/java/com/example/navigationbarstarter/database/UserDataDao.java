@@ -47,4 +47,10 @@ public interface UserDataDao {
 
     @Query("SELECT token FROM userdata WHERE id = :userId")
     long getTokenNumber(long userId);
+
+    @Query("SELECT * FROM userdata WHERE username = :username AND id != :currentUserId LIMIT 1")
+    UserData getUserByUsernameExcludingCurrent(String username, long currentUserId);
+
+    @Query("SELECT * FROM userdata WHERE username = :email AND id != :currentUserId LIMIT 1")
+    UserData getUserByEmailExcludingCurrent(String email, long currentUserId);
 }

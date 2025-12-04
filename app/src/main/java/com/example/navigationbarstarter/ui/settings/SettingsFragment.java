@@ -62,6 +62,10 @@ public class SettingsFragment extends Fragment {
                 result -> {
                     if(result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                         selectedImageUri = result.getData().getData();
+
+                        requireContext().getContentResolver().takePersistableUriPermission(
+                                selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
                         ivProfileImage.setImageURI(selectedImageUri);
                     }
                 }
@@ -80,6 +84,13 @@ public class SettingsFragment extends Fragment {
         settingsViewModel.getUsernameUniqueLiveData().observe(getViewLifecycleOwner(), isUnique -> {
             if(!isUnique) {
                 etUsername.setError("Username already exists");
+            }
+        });
+
+        //Checking if the username the user has changed is unique. If not show an error.
+        settingsViewModel.getEmailUniqueLiveData().observe(getViewLifecycleOwner(), isUnique -> {
+            if(!isUnique) {
+                etEmail.setError("Username already exists");
             }
         });
 
@@ -154,6 +165,7 @@ public class SettingsFragment extends Fragment {
             String newName = Objects.requireNonNull(etName.getText()).toString().trim();
             String newSurname = Objects.requireNonNull(etSurname.getText()).toString().trim();
             String newUsername = Objects.requireNonNull(etUsername.getText()).toString().trim();
+            String newEmail = Objects.requireNonNull(etEmail.getText()).toString().trim();
 
             //Send data to ViewModel
             settingsViewModel.updateUserFields(userId, newName, newSurname, newUri);
@@ -161,16 +173,30 @@ public class SettingsFragment extends Fragment {
             //Checking validity of Username -> MUST NOT BE an EQUAL username in the DB
             settingsViewModel.isUsernameUniqueAndUpdate(userId, newUsername);
 
+            //Checking validity of Email -> MUST NOT BE an EQUAL email in the DB
+            settingsViewModel.isEmailUniqueAndUpdate(userId, newEmail);
             Toast.makeText(getContext(), "New settings saved successfully", Toast.LENGTH_SHORT).show();
         });
 
         //This is not a button, but works the same
         ivProfileImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
             pickImageLauncher.launch(intent);
         });
+
+        btnChangePassword.setOnClickListener(v -> {
+            ChangePasswordDialog dialog = new ChangePasswordDialog();
+            dialog.show(getParentFragmentManager(), "ChangePasswordDialog");
+        });
+
     }
+
+    public void onPasswordChangeRequested(String oldPass, String newPass, String confirmNewPass, SettingsViewModel settingsViewModel) {
+        settingsViewModel.checkAndUpdatePassword(userId, oldPass, newPass, confirmNewPass);
+    }
+
 
     @Override
     public void onDestroyView() {

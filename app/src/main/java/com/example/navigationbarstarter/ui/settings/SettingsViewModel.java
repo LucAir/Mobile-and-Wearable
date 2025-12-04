@@ -17,6 +17,10 @@ public class SettingsViewModel extends AndroidViewModel {
 
     private final MutableLiveData<UserData> currentUserInfo = new MutableLiveData<>();
     private final MutableLiveData<Boolean> usernameUniqueLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> emailUniqueLiveData = new MutableLiveData<>();
+
+    //Here we post false when old password is equal to the new one and when the 2 new password are ≠
+    private final MutableLiveData<Integer> equalPasswordLiveData = new MutableLiveData<>();
 
     //Constructor
     public SettingsViewModel(Application application) {
@@ -59,7 +63,35 @@ public class SettingsViewModel extends AndroidViewModel {
         repository.updateUserFields(id, name, surname, uri);
     }
 
+    /*
+     * Check if email is unique
+     * and
+     * post the value inside the live variable
+     */
+    public void isEmailUniqueAndUpdate(long userId, String email) {
+        repository.isEmailUniqueAndUpdate(userId, email, isUnique -> {
+            emailUniqueLiveData.postValue((boolean) isUnique);
+        });
+    }
+
+    public LiveData<Boolean> getEmailUniqueLiveData() {
+        return emailUniqueLiveData;
+    }
 
 
+    /*
+     * Check if new password is equal to the one store in DB
+     * OR
+     * Check if new password and currentNewPassword are different
+     * AND
+     * If everything is fine update the password
+     */
+    public void checkAndUpdatePassword(long userId, String oldPassword, String newPassword, String confirmNewPassword) {
+        repository.isPasswordCorrectAndUpdate(userId, oldPassword, newPassword, confirmNewPassword, result ->
+                equalPasswordLiveData.postValue((Integer) result));
+    }
 
+    public LiveData<Integer> getEqualPasswordLiveData() {
+        return equalPasswordLiveData;
+    }
 }
