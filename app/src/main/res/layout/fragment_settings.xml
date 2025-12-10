@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient"
     android:padding="24dp">
 
-    <!-- Scrollable content -->
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:id="@+id/scrollView2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:paddingBottom="100dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:id="@+id/settingsCard"
@@ -18,35 +25,21 @@
             android:layout_height="wrap_content"
             android:background="@drawable/card_background"
             android:elevation="10dp"
-            android:orientation="vertical"
             android:gravity="center_horizontal"
+            android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- Title -->
-            <TextView
-                android:id="@+id/settingsTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Account Settings"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="16dp"
-                android:gravity="center"/>
-
-            <!-- Profile Image -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivProfileImage"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/ic_default_avatar"
-                android:scaleType="centerCrop"
-                android:layout_marginBottom="20dp"
+                android:layout_width="75dp"
+                android:layout_height="83dp"
+                android:layout_marginBottom="24dp"
                 android:clickable="true"
                 android:focusable="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_default_avatar"
                 app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.None" />
 
-            <!-- Name -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilName"
                 android:layout_width="match_parent"
@@ -63,7 +56,6 @@
                     android:textColor="#FFFFFF" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Surname -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilSurname"
                 android:layout_width="match_parent"
@@ -77,10 +69,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#FFFFFF" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Username -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilUsername"
                 android:layout_width="match_parent"
@@ -94,15 +85,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#FFFFFF" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Email -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="24dp"
                 android:hint="Email"
                 android:textColorHint="#FFFFFF">
 
@@ -111,38 +101,37 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#FFFFFF" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Change Password Button -->
             <Button
                 android:id="@+id/btnChangePassword"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
                 android:text="Change Password"
-                android:textSize="16sp"
                 android:textAllCaps="false"
-                android:layout_marginBottom="12dp"/>
+                android:textSize="16sp" />
 
-            <!-- Save Button -->
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
+                android:layout_marginBottom="32dp"
                 android:text="Save"
-                android:textSize="16sp"
                 android:textAllCaps="false"
-                android:layout_marginBottom="12dp"/>
+                android:textSize="16sp" />
 
-            <!-- Logout Button -->
             <Button
                 android:id="@+id/btnLogout"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@android:color/transparent"
                 android:text="Logout"
-                android:textSize="16sp"
-                android:textAllCaps="false"/>
+                android:textColor="#FF0000"
+                android:textAllCaps="false"
+                android:textSize="16sp" />
 
         </LinearLayout>
     </ScrollView>
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

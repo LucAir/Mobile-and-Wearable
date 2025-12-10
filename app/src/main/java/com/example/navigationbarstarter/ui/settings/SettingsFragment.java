@@ -111,7 +111,6 @@ public class SettingsFragment extends Fragment {
 
     //Binding view element to variables
     private void setBinding() {
-        settingsTitle = binding.settingsTitle;
         ivProfileImage = binding.ivProfileImage;
         etName = binding.etName;
         etSurname = binding.etSurname;
