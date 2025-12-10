@@ -15,7 +15,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.R;
-import com.example.navigationbarstarter.database.UserData;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.Objects;

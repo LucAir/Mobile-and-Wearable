@@ -65,11 +65,8 @@ public class DashboardFragment extends Fragment {
 
     private LineChart heartRateChart;
 
-    private TreeMap<String, Integer> allHeartData;
-
     private TabLayout tab;
 
-    private TabItem tb1, tb2, tb3;
     private TextView txtFeature;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -140,8 +137,6 @@ public class DashboardFragment extends Fragment {
             @Override public void onTabReselected(TabLayout.Tab t) {}
         });
     }
-
-
 
     //TODO: change to a better hover
     private void createHeartRateChartWithMinutes(TreeMap<String, Integer> allHeartData) {
@@ -335,6 +330,7 @@ public class DashboardFragment extends Fragment {
                 count++;
             }
 
+            //TODO CHECK USAGE OF THIS
             float avg = count > 0 ? (float) sum / count : 0;
 
             //CandleEntry(x, high, low, open, close)
@@ -380,7 +376,7 @@ public class DashboardFragment extends Fragment {
         xAxisCandle.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return "Session " + ((int) value + 1); // Session 1, Session 2
+                return "Session " + ((int) value + 1); //Session 1, Session 2
             }
         });
 
@@ -389,8 +385,21 @@ public class DashboardFragment extends Fragment {
         leftAxisCandle.setDrawGridLines(true);
         leftAxisCandle.setGridColor(Color.LTGRAY);
         leftAxisCandle.setTextSize(10f);
-        leftAxisCandle.setAxisMinimum(50f);
-        leftAxisCandle.setAxisMaximum(180f);
+
+        //Find min and max in current data
+        float minBpm = 50f;
+        float maxBpm = 0f;
+        for (Entry entry : candleEntries) {
+            if (entry.getY() > maxBpm) {
+                maxBpm = entry.getY() + 10;
+            }
+            if (entry.getY() < minBpm) {
+                minBpm = entry.getY() - 5;
+            }
+        }
+
+        leftAxisCandle.setAxisMinimum(minBpm);
+        leftAxisCandle.setAxisMaximum(maxBpm);
 
         YAxis rightAxisCandle = candleChart.getAxisRight();
         rightAxisCandle.setEnabled(false);
