@@ -27,4 +27,9 @@
     <string name="customize_guardian">Customize Guardian</string>
     <string name="item_image">image\n</string>
     <string name="account_settings">Account Settings</string>
+    <string name="new_feature_to_be_added_soon">New Feature to be added soon!</string>
+    <string name="session_statistics">Session Statistics</string>
+    <string name="last">Last</string>
+    <string name="compare">Compare</string>
+    <string name="emojy">😂</string>
 </resources>

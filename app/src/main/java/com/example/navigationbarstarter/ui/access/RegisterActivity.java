@@ -503,21 +503,42 @@ public class RegisterActivity extends AppCompatActivity {
 
                     List<Long> unlockedItems = new ArrayList<>();
 
-                    // Create new user with the valid guardianId we just got
-                    UserData newUser = new UserData(username, age, email, password, guardianId, unlockedItems, 4000, null, null);
+                    /**
+                     * Create new user:
+                     * In the creation we want to set the element taken in the registration.
+                     * Then add 500 token, just to start.
+                     * Then we create a default guardian for the user, so we set the ID.
+                     * Other information like: name, surname ecc.. are null, can be customized in setting.
+                     * first login true -> use to make the baseline test, and customize metric in the ML Fake algorithm.
+                     * the other 0 are the metric to be computed.
+                     */
+                    UserData newUser = new UserData(username,
+                                                    age,
+                                                    email,
+                                                    password,
+                                                    guardianId,
+                                                    unlockedItems,
+                                              500,
+                                              null,
+                                            null,
+                                                    null,
+                                                    true,
+                                                    0,
+                                                    0
+                                                    );
 
-                    // Insert the User into the database
+                    //Insert the User into the database
                     long resultOperation = appDatabase.userDataDao().insert(newUser);
 
-                    // Log for debugging
+                    //Log for debugging
                     Log.e("NEW USER", "msg: "+ resultOperation);
 
-                    // Check if activity is still alive before updating UI
+                    //Check if activity is still alive before updating UI
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
 
-                    // Report success to the UI thread
+                    //Report success to the UI thread
                     mainHandler.post(() -> handleRegistrationSuccess(resultOperation));
                 });
 

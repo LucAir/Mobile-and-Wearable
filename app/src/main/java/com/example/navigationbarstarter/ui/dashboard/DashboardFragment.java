@@ -6,11 +6,9 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.text.Highlights;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +18,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.database.AppDatabase;
-import com.example.navigationbarstarter.database.session.SessionData;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
 import com.github.mikephil.charting.charts.CandleStickChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -36,16 +33,9 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
@@ -63,7 +53,14 @@ public class DashboardFragment extends Fragment {
 
     private LineChart heartRateChart;
 
-    private TreeMap<String, Integer> allHeartData;
+    private TabLayout tab;
+
+    private TextView txtFeature;
+
+    //Used to store baseline values
+    private float userBaseline_hr;
+    private float userBaseline_hrv;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -77,12 +74,35 @@ public class DashboardFragment extends Fragment {
         View root = binding.getRoot();
 
         //Binding elements
-        candleChart = binding.candleChart;
-        heartRateChart = binding.heartRateChart;
+        candleChart = binding.candleStickChart;
+        heartRateChart = binding.lineChart;
+        tab = binding.tabLayout;
+        txtFeature = binding.txtFeature;
+
+        //Initial visibility on startup
+        heartRateChart.setVisibility(View.VISIBLE);
+        candleChart.setVisibility(View.INVISIBLE);
+        txtFeature.setVisibility(View.INVISIBLE);
 
         getUserIdFromSharedPreferences();
 
+        setUpListener();
+
         loadDataHeartBeat();
+
+        //Checking if live variables has changed
+        dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
+            if (baselineHr != 0) {
+                this.userBaseline_hr = baselineHr;
+            }
+        });
+
+        //Checking if live variables has changed
+        dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
+            if (baselineHrv != 0) {
+                this.userBaseline_hrv = baselineHrv;
+            }
+        });
 
         return root;
     }
@@ -93,6 +113,40 @@ public class DashboardFragment extends Fragment {
         this.userId = sharedPreferences.getLong("UserId", userId);
     }
 
+    private void getUserBaselineValue() {
+
+    }
+
+    private void setUpListener() {
+        tab.selectTab(tab.getTabAt(0));
+        tab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab t) {
+                switch (t.getPosition()) {
+                    case 0:
+                        heartRateChart.setVisibility(View.VISIBLE);
+                        candleChart.setVisibility(View.INVISIBLE);
+                        txtFeature.setVisibility(View.INVISIBLE);
+                        break;
+
+                    case 1:
+                        heartRateChart.setVisibility(View.INVISIBLE);
+                        candleChart.setVisibility(View.VISIBLE);
+                        txtFeature.setVisibility(View.INVISIBLE);
+                        break;
+
+                    case 2:
+                        heartRateChart.setVisibility(View.INVISIBLE);
+                        candleChart.setVisibility(View.INVISIBLE);
+                        txtFeature.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }
+
+            @Override public void onTabUnselected(TabLayout.Tab t) {}
+            @Override public void onTabReselected(TabLayout.Tab t) {}
+        });
+    }
 
     //TODO: change to a better hover
     private void createHeartRateChartWithMinutes(TreeMap<String, Integer> allHeartData) {
@@ -286,6 +340,7 @@ public class DashboardFragment extends Fragment {
                 count++;
             }
 
+            //TODO CHECK USAGE OF THIS
             float avg = count > 0 ? (float) sum / count : 0;
 
             //CandleEntry(x, high, low, open, close)
@@ -331,7 +386,7 @@ public class DashboardFragment extends Fragment {
         xAxisCandle.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return "Session " + ((int) value + 1); // Session 1, Session 2
+                return "Session " + ((int) value + 1); //Session 1, Session 2
             }
         });
 
@@ -340,8 +395,21 @@ public class DashboardFragment extends Fragment {
         leftAxisCandle.setDrawGridLines(true);
         leftAxisCandle.setGridColor(Color.LTGRAY);
         leftAxisCandle.setTextSize(10f);
-        leftAxisCandle.setAxisMinimum(50f);
-        leftAxisCandle.setAxisMaximum(180f);
+
+        //Find min and max in current data
+        float minBpm = 50f;
+        float maxBpm = 0f;
+        for (Entry entry : candleEntries) {
+            if (entry.getY() > maxBpm) {
+                maxBpm = entry.getY() + 10;
+            }
+            if (entry.getY() < minBpm) {
+                minBpm = entry.getY() - 5;
+            }
+        }
+
+        leftAxisCandle.setAxisMinimum(minBpm);
+        leftAxisCandle.setAxisMaximum(maxBpm);
 
         YAxis rightAxisCandle = candleChart.getAxisRight();
         rightAxisCandle.setEnabled(false);
