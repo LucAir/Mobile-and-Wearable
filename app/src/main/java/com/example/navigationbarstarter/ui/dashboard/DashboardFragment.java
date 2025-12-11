@@ -6,11 +6,9 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.text.Highlights;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +18,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.database.AppDatabase;
-import com.example.navigationbarstarter.database.session.SessionData;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
 import com.github.mikephil.charting.charts.CandleStickChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -36,18 +33,9 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-import com.google.android.material.tabs.TabItem;
 import com.google.android.material.tabs.TabLayout;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
@@ -86,11 +74,10 @@ public class DashboardFragment extends Fragment {
         tab = binding.tabLayout;
         txtFeature = binding.txtFeature;
 
-        //INITIAL VISIBILITY on startup
+        //Initial visibility on startup
         heartRateChart.setVisibility(View.VISIBLE);
         candleChart.setVisibility(View.INVISIBLE);
         txtFeature.setVisibility(View.INVISIBLE);
-
 
         getUserIdFromSharedPreferences();
 

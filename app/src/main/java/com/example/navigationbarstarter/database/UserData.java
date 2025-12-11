@@ -61,6 +61,15 @@ public class UserData {
     @ColumnInfo(name = "profile_image_uri")
     private String profileImageUri;
 
+    @ColumnInfo(name = "first_log_in")
+    private boolean isFirstLogin;
+
+    @ColumnInfo(name = "baseline_hr")
+    private float baselineHr;
+
+    @ColumnInfo(name = "hrv")
+    private float baselineHrv;
+
     public UserData(@NonNull String username,
                     @NonNull int age,
                     @NonNull String email,
@@ -70,7 +79,10 @@ public class UserData {
                     long token,
                     @Nullable String name,
                     @Nullable String surname,
-                    @Nullable String profileImageUri) {
+                    @Nullable String profileImageUri,
+                    @Nullable boolean isFirstLogin,
+                    @Nullable float baselineHr,
+                    @Nullable float baselineHrv) {
         this.age = age;
         this.email = email;
         this.username = username;
@@ -81,6 +93,9 @@ public class UserData {
         this.name = name;
         this.surname = surname;
         this.profileImageUri = profileImageUri;
+        this.isFirstLogin = isFirstLogin;
+        this.baselineHr = baselineHr;
+        this.baselineHrv = baselineHrv;
     }
 
     public long getId() {
@@ -173,6 +188,30 @@ public class UserData {
 
     public void setProfileImageUri(String profileImageUri) {
         this.profileImageUri = profileImageUri;
+    }
+
+    public boolean isFirstLogin() {
+        return isFirstLogin;
+    }
+
+    public void setFirstLogin(boolean firstLogin) {
+        isFirstLogin = firstLogin;
+    }
+
+    public float getBaselineHr() {
+        return baselineHr;
+    }
+
+    public void setBaselineHr(float baselineHr) {
+        this.baselineHr = baselineHr;
+    }
+
+    public float getBaselineHrv() {
+        return baselineHrv;
+    }
+
+    public void setBaselineHrv(float baselineHrv) {
+        this.baselineHrv = baselineHrv;
     }
 }
 
