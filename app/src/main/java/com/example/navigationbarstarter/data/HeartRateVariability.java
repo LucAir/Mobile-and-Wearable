@@ -1,79 +1,105 @@
 package com.example.navigationbarstarter.data;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class HeartRateVariability {
 
-    /*
-        This class aims to compute HRV. Is based on RR intervals:
-            - IBI -> inter-beat intervals
-            - NN intervals -> normal-to-normal beats
-        RR interval is the time between 2 heartbeats measured in milliseconds
-        So given:
-        Beat            Time
-        1               0
-        2               850
-        3               1700
+    private static final SimpleDateFormat sdf =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS", Locale.US);
 
-        => RR intervals [850 ms, 850 ms]
-
-        HRV describes how much those intervals vary
-
-        There are 3 way to compute HRV:
-            1)RMSSD -> Root Square of Successive Differences -> used for short-term
-            2)SDNN -> standard deviation of RR intervals -> good for long-term HRV
-            3)pNN50 -> percentage of consecutive RR intervals differing by > 50 ms
-
-        In our data we do not have the right timestamp -> it indicates when the device check the hearbeat, but its not constant every millisecond
-        So I decided to round things up to see if works, and then eventually considering taking a real dataset.
-        BPM = (beats per minute)1 beat = t = 60,000 ms -> So RR (time per beat) = 60,000 / BPM.
-        After doing this approximation we have a series of RR so whe can compute HRV
-     */
-
-    public static double bpmToRR(int bpm) {
-        return 60000.0 / bpm;
+    public static float rrToBpm(float rrMs) {
+        return 60000f / rrMs;
     }
 
-    //Compute RMSSD
-    public static double computeRMSSD(List<Integer> bpmValues) {
-        if (bpmValues.size() < 2) return 0;
+    public static List<Float> computeBPM(List<String> timestamps) {
+        List<Float> heartbeatBpmValues = new ArrayList<>();
+        if (timestamps.size() < 2) return heartbeatBpmValues;
 
-        List<Double> rrList = new ArrayList<>();
-        for (int bpm : bpmValues) {
-            rrList.add(bpmToRR(bpm));
+        // compute per-beat BPM
+        for (int i = 1; i < timestamps.size(); i++) {
+            try {
+                long t1 = sdf.parse(timestamps.get(i - 1)).getTime();
+                long t2 = sdf.parse(timestamps.get(i)).getTime();
+                float rr = (float) (t2 - t1);
+                if (rr > 250 && rr < 2000) heartbeatBpmValues.add(rrToBpm(rr));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
 
-        List<Double> diffs = new ArrayList<>();
+        // aggregate into 60 points (1 per minute)
+        List<Float> perMinuteBpm = new ArrayList<>();
+        int totalBeats = heartbeatBpmValues.size();
+        if (totalBeats == 0) return perMinuteBpm;
+        int pointsPerMinute = totalBeats / 60;
 
-        List<Double> squares = new ArrayList<>();
+        for (int i = 0; i < 60; i++) {
+            int start = i * pointsPerMinute;
+            int end = (i == 59) ? totalBeats : start + pointsPerMinute;
+            if (start >= totalBeats) break;
+
+            float sum = 0f;
+            for (int j = start; j < end; j++) sum += heartbeatBpmValues.get(j);
+            perMinuteBpm.add(sum / (end - start));
+        }
+
+        return perMinuteBpm;
+    }
+
+    public static List<Float> computeHRV(List<String> timestamps) {
+        List<Float> rrList = new ArrayList<>();
+        if (timestamps.size() < 3) return new ArrayList<>();
+
+        // compute RR intervals
+        for (int i = 1; i < timestamps.size(); i++) {
+            try {
+                long t1 = sdf.parse(timestamps.get(i - 1)).getTime();
+                long t2 = sdf.parse(timestamps.get(i)).getTime();
+                float rr = (float) (t2 - t1);
+                if (rr > 250 && rr < 2000) rrList.add(rr);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // compute RMSSD using sliding window (~30 beats)
+        List<Float> rmssdValues = new ArrayList<>();
+        int window = 30;
+        for (int i = window; i < rrList.size(); i++) {
+            List<Float> segment = rrList.subList(i - window, i);
+            rmssdValues.add(calculateRMSSD(segment));
+        }
+
+        // scale RMSSD to 60 points
+        List<Float> perMinuteHRV = new ArrayList<>();
+        int totalPoints = rmssdValues.size();
+        if (totalPoints == 0) return perMinuteHRV;
+        int pointsPerMinute = totalPoints / 60;
+
+        for (int i = 0; i < 60; i++) {
+            int start = i * pointsPerMinute;
+            int end = (i == 59) ? totalPoints : start + pointsPerMinute;
+            if (start >= totalPoints) break;
+
+            float sum = 0f;
+            for (int j = start; j < end; j++) sum += rmssdValues.get(j);
+            perMinuteHRV.add(sum / (end - start));
+        }
+
+        return perMinuteHRV;
+    }
+
+    private static float calculateRMSSD(List<Float> rrList) {
+        if (rrList.size() < 2) return 0;
+        float sumSquares = 0;
         for (int i = 1; i < rrList.size(); i++) {
-            double diff = rrList.get(i) - rrList.get(i - 1);
-            squares.add(diff * diff); //squared difference
+            float diff = rrList.get(i) - rrList.get(i - 1);
+            sumSquares += diff * diff;
         }
-
-        double mean = 0;
-        for (double sq : squares) mean += sq;
-        mean /= squares.size();
-
-        return Math.sqrt(mean); //final RMSSD value
-    }
-
-    //Compute SDNN
-    public static double computeSDNN(List<Integer> bpmValues) {
-        if (bpmValues.isEmpty()) return 0;
-
-        List<Double> rrList = new ArrayList<>();
-        for (int bpm : bpmValues) rrList.add(bpmToRR(bpm));
-
-        double mean = 0;
-        for (double rr : rrList) mean += rr;
-        mean /= rrList.size();
-
-        double variance = 0;
-        for (double rr : rrList) variance += Math.pow(rr - mean, 2);
-        variance /= rrList.size();
-
-        return Math.sqrt(variance);
+        return (float) Math.sqrt(sumSquares / (rrList.size() - 1));
     }
 }

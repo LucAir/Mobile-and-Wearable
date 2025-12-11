@@ -126,10 +126,10 @@ public class HomeViewModel extends AndroidViewModel {
         if (heartRateWindow.size() > HRV_WINDOW_SIZE) {
             heartRateWindow.remove(0);
         }
-         if (heartRateWindow.size() > 5) {
-             double rmssd = HeartRateVariability.computeRMSSD(heartRateWindow);
-             hrvLive.postValue(rmssd);
-         }
+//         if (heartRateWindow.size() > 5) {
+//             double rmssd = HeartRateVariability.computeRMSSD(heartRateWindow);
+//             hrvLive.postValue(rmssd);
+//         }
     }
 
     // Helper to check if we are allowed to show the dialog (5 min cooldown)

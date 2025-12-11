@@ -22,15 +22,18 @@ public class DashboardRepository {
         executor = Executors.newSingleThreadExecutor();
     }
 
-    public void getUserBaselineHr(Long id, SettingsRepository.ResultCallback callback) {
+    public void getUserBaselineHr(Long id, DashboardRepository.ResultCallback callback) {
         executor.execute(() -> {
             UserData userData = userDataDao.getUserById(id);
+            userData.setBaselineHr(65f);
+            userData.setBaselineHrv(70f);
+            userDataDao.updateUser(userData);
             float baselineHr = userData.getBaselineHr();
             callback.onResult(baselineHr);
         });
     }
 
-    public void getUserBaselineHrv(Long id, SettingsRepository.ResultCallback callback) {
+    public void getUserBaselineHrv(Long id, DashboardRepository.ResultCallback callback) {
         executor.execute(() -> {
             UserData userData = userDataDao.getUserById(id);
             float baselineHrv = userData.getBaselineHrv();

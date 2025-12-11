@@ -16,7 +16,7 @@ import com.example.navigationbarstarter.database.item.ItemsDataDao;
                       ModeChange.class,
                       GuardianData.class,
                       ItemsData.class
-                      }, version = 9, exportSchema = false)
+                      }, version = 10, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
