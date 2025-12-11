@@ -57,6 +57,11 @@ public class DashboardFragment extends Fragment {
 
     private TextView txtFeature;
 
+    //Used to store baseline values
+    private float userBaseline_hr;
+    private float userBaseline_hrv;
+
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         DashboardViewModel dashboardViewModel =
@@ -85,6 +90,20 @@ public class DashboardFragment extends Fragment {
 
         loadDataHeartBeat();
 
+        //Checking if live variables has changed
+        dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
+            if (baselineHr != 0) {
+                this.userBaseline_hr = baselineHr;
+            }
+        });
+
+        //Checking if live variables has changed
+        dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
+            if (baselineHrv != 0) {
+                this.userBaseline_hrv = baselineHrv;
+            }
+        });
+
         return root;
     }
 
@@ -92,6 +111,10 @@ public class DashboardFragment extends Fragment {
     private void getUserIdFromSharedPreferences() {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
         this.userId = sharedPreferences.getLong("UserId", userId);
+    }
+
+    private void getUserBaselineValue() {
+
     }
 
     private void setUpListener() {

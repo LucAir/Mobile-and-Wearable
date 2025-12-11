@@ -1,5 +1,7 @@
 package com.example.navigationbarstarter.ui.dashboard;
 
+import android.content.SharedPreferences;
+
 public class FakeMLAlgorithm {
     /**
      * In this class we wanted to implement an ML algorithm for stress detection given
@@ -30,9 +32,9 @@ public class FakeMLAlgorithm {
     public static final int STRESS_MONITOR = 1;
     public static final int STRESS_OPTIMAL_STATE = 0;
 
-    public static int detectStressLevel(int heartRate, double hrv, int baseline) {
+    public static int detectStressLevel(int heartRate, double hrv, int baseline_hr, int baseline_hrv) {
         //Determine if heart-rate is high relative to user's baseline
-        boolean isHeartRateHigh = heartRate > (baseline + 15);
+        boolean isHeartRateHigh = heartRate > (baseline_hr + 15);
         boolean isHRVLow = hrv < (hrv * 0.7);
 
         //CRITICAL STRESS
@@ -46,5 +48,4 @@ public class FakeMLAlgorithm {
             return STRESS_OPTIMAL_STATE;
         }
     }
-
 }

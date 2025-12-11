@@ -509,7 +509,7 @@ public class RegisterActivity extends AppCompatActivity {
                      * Then add 500 token, just to start.
                      * Then we create a default guardian for the user, so we set the ID.
                      * Other information like: name, surname ecc.. are null, can be customized in setting.
-                     * first login true -> use to make the baseline test, and customize metrix in the ML Fake algorithm.
+                     * first login true -> use to make the baseline test, and customize metric in the ML Fake algorithm.
                      * the other 0 are the metric to be computed.
                      */
                     UserData newUser = new UserData(username,

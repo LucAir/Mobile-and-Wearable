@@ -67,7 +67,7 @@ public class UserData {
     @ColumnInfo(name = "baseline_hr")
     private float baselineHr;
 
-    @ColumnInfo(name = "hrv")
+    @ColumnInfo(name = "baseline_hrv")
     private float baselineHrv;
 
     public UserData(@NonNull String username,
