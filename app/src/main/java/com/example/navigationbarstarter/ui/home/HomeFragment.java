@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -40,14 +41,15 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     // UI Components
     private TextView focusModeStatus;
     private TextView timerText;
-    private TextView timerSubtitle;
-    private TextView heartRateText;
     private CircularProgressIndicator timerProgress;
     private ImageView heartIcon;
     private ImageView heartbeatLine;
     private View pulseCircleOuter;
     private View pulseCircleInner;
-    private MaterialButton btnStartStop;
+
+    // New Buttons
+    private MaterialButton btnPlay;
+    private MaterialButton btnStop;
     private MaterialButton btnReset;
 
     // Logic Variables
@@ -68,7 +70,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
-        homeViewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class); // Use requireActivity() to share VM if needed, or this for fragment scope. 'this' is fine usually.
+        homeViewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -78,12 +80,11 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         executorService = Executors.newSingleThreadExecutor();
         loadUserId();
 
-        // 1. Setup UI Update Loop (Just queries VM for time)
+        // 1. Setup UI Update Loop
         uiHandler = new Handler(Looper.getMainLooper());
         uiRunnable = new Runnable() {
             @Override
             public void run() {
-                // Always update UI to match ViewModel state
                 updateUIState();
                 uiHandler.postDelayed(this, 1000);
             }
@@ -91,14 +92,26 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         uiHandler.post(uiRunnable);
 
         // 2. Button Listeners
-        btnStartStop.setOnClickListener(v -> {
-            homeViewModel.toggleTimer();
-            updateUIState(); // Immediate update
+
+        // PLAY BUTTON (Start/Resume)
+        btnPlay.setOnClickListener(v -> {
+            if (!homeViewModel.isTimerRunning()) {
+                homeViewModel.toggleTimer(); // Starts timer
+                updateUIState();
+            }
         });
 
+        // STOP BUTTON (Pause)
+        btnStop.setOnClickListener(v -> {
+            if (homeViewModel.isTimerRunning()) {
+                homeViewModel.toggleTimer(); // Pauses timer
+                updateUIState();
+            }
+        });
+
+        // RESET BUTTON
         btnReset.setOnClickListener(v -> {
             homeViewModel.resetTimer();
-            // Also reset local counters
             consecutiveHighBpmCount = 0;
             updateUIState();
         });
@@ -108,7 +121,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             currentHeartRate = bpm;
             updateHeartRateUI();
 
-            // Only check logic if timer is actually running
             if (homeViewModel.isTimerRunning()) {
                 checkMovementLogic(bpm);
             }
@@ -124,27 +136,39 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         boolean isRunning = homeViewModel.isTimerRunning();
         long totalTime = homeViewModel.getCurrentTotalTime();
 
-        // Update Button Text
+        // Update Status Text based on state
         if (isRunning) {
-            btnStartStop.setText("Stop the section?");
             focusModeStatus.setText("Focus Mode: Active");
+            // Optional: visually disable Play button to show it's active
+            btnPlay.setAlpha(0.5f);
+            btnStop.setAlpha(1.0f);
         } else {
-            btnStartStop.setText("Start a focus section?");
-            focusModeStatus.setText(totalTime > 0 ? "Focus Mode: Paused" : "Focus Mode: Idle");
+            if (totalTime > 0) {
+                focusModeStatus.setText("Focus Mode: Paused");
+            } else {
+                focusModeStatus.setText("Focus Mode: Idle");
+            }
+            // Optional: visually enable Play button
+            btnPlay.setAlpha(1.0f);
+            btnStop.setAlpha(0.5f);
         }
 
         // Update Timer Text
         long seconds = (totalTime / 1000) % 60;
         long minutes = (totalTime / 1000) / 60;
         String timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
-        String bpmString = isRunning ? String.format(Locale.getDefault(), "  |  %d BPM", currentHeartRate) : "";
-        timerText.setText(timeString + bpmString);
+
+        // Show BPM next to timer only if running (or always if you prefer)
+        String bpmString = isRunning ? String.format(Locale.getDefault(), "\n%d BPM", currentHeartRate) : "";
+
+        // Note: Layout constraints might need checking if BPM adds a new line,
+        // strictly following your design, we might just keep the time:
+        timerText.setText(timeString);
 
         // Update Progress
         int progressPercentage = (int) ((totalTime / 1000) % 1500) / 15;
         timerProgress.setProgress(progressPercentage);
 
-        // Check tokens (logic kept from before)
         checkAndAwardTokens(totalTime);
     }
 
@@ -156,9 +180,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         }
 
         if (consecutiveHighBpmCount >= 3) {
-            consecutiveHighBpmCount = 0; // Reset
-
-            // Ask ViewModel if we are allowed to show dialog (Snooze check)
+            consecutiveHighBpmCount = 0;
             if (homeViewModel.canShowBreakDialog()) {
                 showBreakPopup();
             }
@@ -174,12 +196,14 @@ public class HomeFragment extends Fragment implements SensorEventListener {
                 .setMessage("Movement detected, need a break?")
                 .setCancelable(false)
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    homeViewModel.pauseTimer();
+                    if(homeViewModel.isTimerRunning()) {
+                        homeViewModel.toggleTimer(); // Pause
+                    }
                     focusModeStatus.setText("Focus Mode: Taking a Break");
                     isBreakDialogShowing = false;
+                    updateUIState();
                 })
                 .setNegativeButton("No", (dialog, which) -> {
-                    // Tell VM to snooze this dialog for 5 mins
                     homeViewModel.onBreakDialogDismissed();
                     isBreakDialogShowing = false;
                 })
@@ -194,7 +218,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         heartbeatLine = binding.heartbeatLine;
         pulseCircleOuter = binding.pulseCircleOuter;
         pulseCircleInner = binding.pulseCircleInner;
-        btnStartStop = binding.btnStartStop;
+
+        // New Buttons Mapping
+        btnPlay = binding.btnPlay;
+        btnStop = binding.btnStop;
         btnReset = binding.btnReset;
     }
 
