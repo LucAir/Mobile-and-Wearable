@@ -26,6 +26,8 @@ public class FakeMLAlgorithm {
      * 1)HIGH heart-rate variability and HIGH heart-rate -> ACTIVE AND ENGAGED, but MONITOR (high heartbeats)
      * 2)LOW heart-rate variability and LOW heart-rate -> BREAK RECOMMENDED -> low energy and poor adaptability -> mental fatigue
      * 3)LOW heart-rate variability and HIGH heart-rate and -> STRESSED (WORSE SITUATION) -> BREAK
+     *
+     * Level 1 and 2 in the chart are handle with the same yellow color. Are considered as warnings.
      */
 
     public static final int STRESS_CRITICAL = 3;

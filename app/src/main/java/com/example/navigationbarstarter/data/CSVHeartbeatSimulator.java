@@ -123,7 +123,7 @@ public class CSVHeartbeatSimulator {
                     continue;
                 }
 
-                String[] parts = line.split(",");
+                String[] parts = line.split(",", 2);
                 if (parts.length < 2) continue;
 
                 try {
