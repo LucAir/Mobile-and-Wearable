@@ -1,24 +1,23 @@
 # Mobile-and-Wearable
 
-### TITLE: WORKFLOW GUARDIAN 
-Have you ever wonder how is the feeling of working / studying protected by a guardian?? What no?? Well it's time to experiment 😊.
+### TITLE: WORKFLOW GUARDIAN  
+Have you ever wondered what it feels like to have your work or study sessions protected by a guardian? No? Well, it’s time to find out 😊.
 
 #### How does it work
-- Suppose you want to study and you are bored of the classic application where appears only a timer and a small character to be customized. You decide to try something new and you fall into
-  WorkflowGuardian.
-- Once you open the application a Registration is required, but don't worry it's very fast!
-- Once logged-in for the first time a small test is required. You stay very chill for 2 minutes and we will record you heartbeat.
-- Why do we need it??
-  -  Heartbeat recording is used to metrix such as: "Heart-Rate" and "Heart-Rate-Variability". This information are stored in our database and used for our stress detection model. This has been done to keep our "Fake machine learning model" (as decided in class: use just an if-else), as precise as possible.
-- Now after this test you are ready to explore the application. In the home page you      see a timer set to zero.
-- If you click it, a study-session will start. In this page to avoid distraction you      can also set the notification to be disabled.
+- Suppose you want to study but are bored of the classic apps that show only a timer and a small customizable character. You decide to try something new, and that’s how you find **WorkflowGuardian**.  
+- When you open the app, registration is required, but don’t worry—it’s very quick!  
+- Once you log in for the first time, a small test is required. Just stay relaxed for 2 minutes, and we will record your heartbeat.  
+- Why do we need it?  
+  - Heartbeat recording is used to calculate metrics such as **Heart Rate** and **Heart Rate Variability**. This information is stored in our database and used for our stress detection model. This ensures that our “fake machine learning model” (as decided in class, using just an if-else) is as accurate as possible.  
+- After this test, you are ready to explore the app. On the home page, you will see a timer set to zero.  
+- Click the timer to start a study session. On this page, to avoid distractions, you can also disable notifications.
 
 #### Features
-Well now you are wondering about what's differe our application from the one in the market:
-- We have a customizable character, a real guardian. Once you created an account, we gift you with 500 token. Every one minute that you stay focused a token will be added to you account. With this token you can buy skin to the guardian, change its background and also assign a pet to him (so it does not feel lonely🥺)
-- Then suppose you are little bit nerd 🤓 and you like chart. We have created a customize section for you. In Analitics📊 you can find 2 differnt type of plot that shows you how the session are going:
-  - LineChart: gives you details about the last session (the one previously concluded).Shows in green the period of time where you were focused, and with 2 kind of point (red and yellow) where you lost the attention (red) and where you could have lost the attention / focus is dropping, but you are still able to study.
-  - Boxplot: this visualization instead allows you to compare different session and just by clicking you will se the number of distraction in each section. On y axis there are hearbeat so that you will se in which section you were more agitated.
-  - For the third visualization we accept suggestion, so be creative and tell us what you want to see❤️
-  
-  
+You might be wondering what makes our app different from others on the market:  
+- We have a customizable character—a real guardian. Once you create an account, we gift you 500 tokens. Every minute you stay focused, a token will be added to your account. You can use these tokens to buy skins for your guardian, change its background, and even assign a pet to it (so it doesn’t feel lonely 🥺).  
+- If you’re a bit of a nerd 🤓 and love charts, we’ve got you covered. In the **Analytics 📊** section, you’ll find two types of visualizations showing how your sessions are going:  
+  - **Line Chart**: Shows details about your last session. Green areas indicate focused periods, while red and yellow points indicate lost attention (red) or moments when focus was dropping but you were still able to study (yellow).  
+  - **Boxplot**: Allows you to compare different sessions. By clicking on a section, you can see the number of distractions. The Y-axis shows your heartbeat, so you can see in which sections you were more agitated.  
+  - For a third visualization, we welcome your suggestions—be creative and tell us what you’d like to see ❤️
+
+#### Technical Details and workflow:
