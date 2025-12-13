@@ -1,6 +1,8 @@
 package com.example.navigationbarstarter.ui.dashboard;
 
 import static android.content.Context.MODE_PRIVATE;
+
+import android.graphics.Paint;
 import android.util.Log;
 import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
 import static com.example.navigationbarstarter.data.HeartRateVariability.computeBPM;
@@ -12,7 +14,6 @@ import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.dete
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,29 +25,37 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.R;
-import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
 import com.github.mikephil.charting.charts.CandleStickChart;
+import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.ScatterChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.CandleData;
 import com.github.mikephil.charting.data.CandleDataSet;
 import com.github.mikephil.charting.data.CandleEntry;
+import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.ScatterData;
+import com.github.mikephil.charting.data.ScatterDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -58,7 +67,7 @@ public class DashboardFragment extends Fragment {
 
     private long userId;
 
-    private CandleStickChart candleChart;
+    private CombinedChart combinedChart;
 
     private LineChart heartRateChart;
 
@@ -85,14 +94,14 @@ public class DashboardFragment extends Fragment {
         View root = binding.getRoot();
 
         //Binding elements
-        candleChart = binding.candleStickChart;
+        combinedChart = binding.combinedChart;
         heartRateChart = binding.lineChart;
         tab = binding.tabLayout;
         txtFeature = binding.txtFeature;
 
         //Initial visibility on startup
         heartRateChart.setVisibility(View.VISIBLE);
-        candleChart.setVisibility(View.INVISIBLE);
+        combinedChart.setVisibility(View.INVISIBLE);
         txtFeature.setVisibility(View.INVISIBLE);
 
         //Initialize hashmap
@@ -106,8 +115,6 @@ public class DashboardFragment extends Fragment {
 
         setUpListener();
 
-        loadDataHeartBeat();
-
         //Checking if live variables has changed
         dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
             if (baselineHr != 0) {
@@ -118,6 +125,7 @@ public class DashboardFragment extends Fragment {
                     if (baselineHrv != 0) {
                         this.userBaseline_hrv = baselineHrv;
                         createHeartRateChartWithMinutes();
+                        createCandleChart();
                     }
                 });
             }
@@ -141,19 +149,19 @@ public class DashboardFragment extends Fragment {
                 switch (t.getPosition()) {
                     case 0:
                         heartRateChart.setVisibility(View.VISIBLE);
-                        candleChart.setVisibility(View.INVISIBLE);
+                        combinedChart.setVisibility(View.INVISIBLE);
                         txtFeature.setVisibility(View.INVISIBLE);
                         break;
 
                     case 1:
                         heartRateChart.setVisibility(View.INVISIBLE);
-                        candleChart.setVisibility(View.VISIBLE);
+                        combinedChart.setVisibility(View.VISIBLE);
                         txtFeature.setVisibility(View.INVISIBLE);
                         break;
 
                     case 2:
                         heartRateChart.setVisibility(View.INVISIBLE);
-                        candleChart.setVisibility(View.INVISIBLE);
+                        combinedChart.setVisibility(View.INVISIBLE);
                         txtFeature.setVisibility(View.VISIBLE);
                         break;
                 }
@@ -166,10 +174,14 @@ public class DashboardFragment extends Fragment {
 
     private void createHeartRateChartWithMinutes() {
         List<String> session1 = sessions.get(1);
+        List<Float> bpm = new ArrayList<>();
+        List<Float> hrv = new ArrayList<>();
 
-        //Compute BPM and HRV per minute (have same points)
-        List<Float> bpm = computeBPM(session1);
-        List<Float> hrv = computeHRV(session1);
+        if (session1 != null) {
+            //Compute BPM and HRV per minute (have same points)
+            bpm = computeBPM(session1);
+            hrv = computeHRV(session1);
+        }
 
         //Ensure same size (JUST TO BE SURE)
         int size = Math.min(bpm.size(), hrv.size());
@@ -185,16 +197,16 @@ public class DashboardFragment extends Fragment {
         for (int i = 0; i < size; i++) {
             float b = bpm.get(i);
             float h = hrv.get(i);
-            greenEntries.add(new Entry(i, b));            //ALL points go to green
+            greenEntries.add(new Entry(i, b)); //ALL points go to green
 
             sum += b;
             if (b > max) max = (int) b;
 
             int stressLevel = detectStressLevel((int)b, h, (int) userBaseline_hr, userBaseline_hrv);
             if (stressLevel == STRESS_CRITICAL) {
-                redEntries.add(new Entry(i, b));          //Same x and y
+                redEntries.add(new Entry(i, b));  //Same x and y
             } else if (stressLevel == STRESS_BREAK_RECOMMENDED || stressLevel == STRESS_MONITOR) {
-                yellowEntries.add(new Entry(i, b));       // same x and y
+                yellowEntries.add(new Entry(i, b)); //Same x and y
             }
         }
 
@@ -212,7 +224,7 @@ public class DashboardFragment extends Fragment {
         heartRateChart.setPinchZoom(true);
         heartRateChart.setHighlightPerTapEnabled(true);
         heartRateChart.setHighlightPerDragEnabled(false);
-        heartRateChart.setMaxHighlightDistance(50f); // Only highlight if within 50 pixels
+        heartRateChart.setMaxHighlightDistance(50f); //Only highlight if within 50 pixels
 
         //Configure Y axis (left) - only left axis visible
         YAxis leftAxis = heartRateChart.getAxisLeft();
@@ -239,7 +251,7 @@ public class DashboardFragment extends Fragment {
         greenSet.setAxisDependency(YAxis.AxisDependency.LEFT);
         greenSet.setDrawCircles(false);
         greenSet.setDrawCircleHole(false);
-        greenSet.setHighlightEnabled(false); // ADD THIS - Disable highlighting for green line
+        greenSet.setHighlightEnabled(false);
 
         //YELLOW overlay: only circles
         LineDataSet yellowSet = new LineDataSet(yellowEntries, "Warning");
@@ -284,14 +296,14 @@ public class DashboardFragment extends Fragment {
 
         heartRateChart.setData(lineData);
 
-        // Set custom marker for showing details on tap
+        //Set custom marker for showing details on tap
         heartRateChart.setMarker(new StressMarkerView(getContext(), bpm, hrv, (int)userBaseline_hr, userBaseline_hrv));
 
-        // ADD THIS - Custom listener to only show marker on yellow/red points
+        //Custom listener to only show marker on yellow/red points
         heartRateChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
             @Override
             public void onValueSelected(Entry e, Highlight h) {
-                // Only show marker if it's a yellow or red point (dataset index 1 or 2)
+                //Only show marker if it's a yellow or red point (dataset index 1 or 2)
                 if (h.getDataSetIndex() == 1 || h.getDataSetIndex() == 2) {
                     heartRateChart.highlightValue(h);
                 } else {
@@ -309,139 +321,221 @@ public class DashboardFragment extends Fragment {
         heartRateChart.invalidate();
     }
 
-
     /**
-     * Create candlestick chart where each candle represents a session
-     * High = max BPM, Low = min BPM, Open/Close = start/end BPM
+     * Create box plot chart where box represents ±10 BPM around average
+     * Outliers (>10 BPM from avg) shown as individual points
+     * Whiskers always go from absolute min to max
      */
-    private void createCandleChart(TreeMap<String, Integer> allHeartData) {
+    private void createCandleChart() {
+        //Load sessions
+        List<String> session1 = sessions.get(1);
+        List<String> session2 = sessions.get(2);
 
-        if (allHeartData == null || allHeartData.isEmpty()) {
-            return;
+        List<Float> bpm1 = new ArrayList<>();
+        List<Float> hrv1 = new ArrayList<>();
+        List<Float> bpm2 = new ArrayList<>();
+        List<Float> hrv2 = new ArrayList<>();
+
+        //Compute BPM + HRV per session
+        if (session1 != null && !session1.isEmpty()) {
+            bpm1 = computeBPM(session1);
+            hrv1 = computeHRV(session1);
         }
 
-        //Get last 120 data points (or all if less than 120)
-        List<Map.Entry<String, Integer>> allEntries = new ArrayList<>(allHeartData.entrySet());
-        int totalPoints = allEntries.size();
-        int startIndex = Math.max(0, totalPoints - 120);
+        if (session2 != null && !session2.isEmpty()) {
+            bpm2 = computeBPM(session2);
+            hrv2 = computeHRV(session2);
+        }
 
-        //Split into 2 sessions of 60 points each
+        if (bpm1.isEmpty() && bpm2.isEmpty()) return;
+
+        //Data structures
         List<CandleEntry> candleEntries = new ArrayList<>();
+        List<Entry> medianEntries = new ArrayList<>();
+        List<Entry> outlierEntries = new ArrayList<>();
 
-        for (int sessionNum = 0; sessionNum < 2; sessionNum++) {
-            int sessionStartIndex = startIndex + (sessionNum * 60);
-            int sessionEndIndex = Math.min(sessionStartIndex + 60, totalPoints);
-
-            if (sessionStartIndex >= totalPoints) break;
-
-            //Calculate stats for this session
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
-            int sum = 0;
-            int count = 0;
-            int firstBpm = 0;
-            int lastBpm = 0;
-
-            for (int i = sessionStartIndex; i < sessionEndIndex; i++) {
-                int bpm = allEntries.get(i).getValue();
-
-                if (count == 0) firstBpm = bpm;
-                lastBpm = bpm;
-
-                min = Math.min(min, bpm);
-                max = Math.max(max, bpm);
-                sum += bpm;
-                count++;
-            }
-
-            //TODO CHECK USAGE OF THIS
-            float avg = count > 0 ? (float) sum / count : 0;
-
-            //CandleEntry(x, high, low, open, close)
-            candleEntries.add(new CandleEntry(
-                    sessionNum,     //X position (0 or 1)
-                    max,           //High
-                    min,           //Low
-                    firstBpm,      //Open (first BPM)
-                    lastBpm        //Close (last BPM)
-            ));
+        //Process Session 1
+        if (!bpm1.isEmpty()) {
+            BoxPlotData data = computeBoxPlotData(bpm1, 0);
+            candleEntries.add(data.candleEntry);
+            medianEntries.add(data.medianEntry);
+            outlierEntries.addAll(data.outliers);
         }
 
-        CandleDataSet dataSet = new CandleDataSet(candleEntries, "Sessions");
+        //Process Session 2
+        if (!bpm2.isEmpty()) {
+            BoxPlotData data = computeBoxPlotData(bpm2, 1);
+            candleEntries.add(data.candleEntry);
+            medianEntries.add(data.medianEntry);
+            outlierEntries.addAll(data.outliers);
+        }
 
-        //Styling
-        dataSet.setDecreasingColor(Color.rgb(255, 69, 58)); //Red for decreasing
-        dataSet.setDecreasingPaintStyle(Paint.Style.FILL);
-        dataSet.setIncreasingColor(Color.rgb(52, 199, 89)); //Green for increasing
-        dataSet.setIncreasingPaintStyle(Paint.Style.FILL);
-        dataSet.setShadowColor(Color.DKGRAY);
-        dataSet.setShadowWidth(2f);
-        dataSet.setDrawValues(false);
-        dataSet.setNeutralColor(Color.BLUE);
+        //Create CandleDataSet for box + whiskers
+        CandleDataSet candleDataSet = new CandleDataSet(candleEntries, "BPM Distribution");
+        candleDataSet.setShadowColor(Color.BLACK); //Whisker lines (min to max)
+        candleDataSet.setShadowWidth(2f);
+        candleDataSet.setDecreasingColor(Color.parseColor("#4A90E2")); //Box color
+        candleDataSet.setDecreasingPaintStyle(Paint.Style.FILL);
+        candleDataSet.setIncreasingColor(Color.parseColor("#4A90E2")); //Box color
+        candleDataSet.setIncreasingPaintStyle(Paint.Style.FILL);
+        candleDataSet.setNeutralColor(Color.parseColor("#4A90E2"));
+        candleDataSet.setDrawValues(false);
+        candleDataSet.setBarSpace(0.3f);
 
-        CandleData candleData = new CandleData(dataSet);
+        CandleData candleData = new CandleData(candleDataSet);
 
-        //Configure chart
-        candleChart.setData(candleData);
-        candleChart.getDescription().setEnabled(false);
-        candleChart.setDrawGridBackground(false);
-        candleChart.setTouchEnabled(true);
-        candleChart.setDragEnabled(true);
-        candleChart.setScaleEnabled(true);
-        candleChart.setPinchZoom(true);
+        //Median markers (red squares)
+        ScatterDataSet medianSet = new ScatterDataSet(medianEntries, "Average");
+        medianSet.setColor(Color.RED);
+        medianSet.setScatterShape(ScatterChart.ScatterShape.SQUARE);
+        medianSet.setScatterShapeSize(12f);
+        medianSet.setDrawValues(false);
 
-        //X axis
-        XAxis xAxisCandle = candleChart.getXAxis();
-        xAxisCandle.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxisCandle.setDrawGridLines(true);
-        xAxisCandle.setGridColor(Color.LTGRAY);
-        xAxisCandle.setGranularity(1f);
-        xAxisCandle.setTextSize(10f);
-        xAxisCandle.setValueFormatter(new ValueFormatter() {
+        //Outlier points (black circles)
+        ScatterDataSet outlierSet = new ScatterDataSet(outlierEntries, "Outliers");
+        outlierSet.setColor(Color.BLACK);
+        outlierSet.setScatterShape(ScatterChart.ScatterShape.CIRCLE);
+        outlierSet.setScatterShapeSize(8f);
+        outlierSet.setDrawValues(false);
+
+        ScatterData scatterData = new ScatterData();
+        scatterData.addDataSet(medianSet);
+        if (!outlierEntries.isEmpty()) {
+            scatterData.addDataSet(outlierSet);
+        }
+
+        //Combine all data
+        CombinedData combinedData = new CombinedData();
+        combinedData.setData(candleData);
+        combinedData.setData(scatterData);
+
+        //Configure chart for BPM data
+        combinedChart.setData(combinedData);
+        combinedChart.getDescription().setEnabled(false);
+
+        //Right axis disabled
+        combinedChart.getAxisRight().setEnabled(false);
+
+        //Left Y-axis (BPM values)
+        YAxis leftAxis = combinedChart.getAxisLeft();
+        leftAxis.setAxisMinimum(40f);
+        leftAxis.setAxisMaximum(200f);
+        leftAxis.setGranularity(10f);
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setAxisLineWidth(1f);
+        leftAxis.setTextSize(12f);
+
+        //X-axis (Sessions)
+        XAxis xAxis = combinedChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setAxisMinimum(-0.5f);
+        xAxis.setAxisMaximum(1.5f);
+        xAxis.setDrawGridLines(false);
+        xAxis.setAxisLineWidth(1f);
+        xAxis.setTextSize(12f);
+        xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return "Session " + ((int) value + 1); //Session 1, Session 2
+                return "Session " + ((int)value + 1);
             }
         });
 
-        //Y axis
-        YAxis leftAxisCandle = candleChart.getAxisLeft();
-        leftAxisCandle.setDrawGridLines(true);
-        leftAxisCandle.setGridColor(Color.LTGRAY);
-        leftAxisCandle.setTextSize(10f);
+        //Legend
+        Legend legend = combinedChart.getLegend();
+        legend.setEnabled(true);
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
 
-        //Find min and max in current data
-        float minBpm = 50f;
-        float maxBpm = 0f;
-        for (Entry entry : candleEntries) {
-            if (entry.getY() > maxBpm) {
-                maxBpm = entry.getY() + 10;
-            }
-            if (entry.getY() < minBpm) {
-                minBpm = entry.getY() - 5;
-            }
-        }
+        combinedChart.setDrawGridBackground(false);
+        combinedChart.setPinchZoom(false);
+        combinedChart.setScaleEnabled(false);
+        combinedChart.setExtraBottomOffset(10f);
+        combinedChart.setExtraTopOffset(10f);
 
-        leftAxisCandle.setAxisMinimum(minBpm);
-        leftAxisCandle.setAxisMaximum(maxBpm);
+        //Marker
+        combinedChart.setMarker(
+                new CandleMarkerView(
+                        getContext(),
+                        bpm1, hrv1,
+                        bpm2, hrv2,
+                        (int) userBaseline_hr,
+                        userBaseline_hrv
+                )
+        );
 
-        YAxis rightAxisCandle = candleChart.getAxisRight();
-        rightAxisCandle.setEnabled(false);
-
-        candleChart.getLegend().setTextSize(12f);
-        candleChart.animateX(1000);
-        candleChart.invalidate();
+        combinedChart.invalidate();
     }
 
-    private void loadDataHeartBeat() {
-        Map<String, Integer> heartTime = CSVHeartbeatSimulator.heartTime;
-        if (heartTime == null || heartTime.isEmpty()) {
-            return;
+    /**
+     * Helper class to hold box plot data
+     */
+    private static class BoxPlotData {
+        CandleEntry candleEntry;
+        Entry medianEntry;
+        List<Entry> outliers;
+
+        BoxPlotData(CandleEntry candle, Entry median, List<Entry> out) {
+            this.candleEntry = candle;
+            this.medianEntry = median;
+            this.outliers = out;
+        }
+    }
+
+    /**
+     * Compute box plot data with outlier detection
+     * Box = avg ± 10 BPM (clamped to min/max)
+     * Outliers = values > 10 BPM away from avg
+     * Whiskers = always min to max
+     */
+    private BoxPlotData computeBoxPlotData(List<Float> data, int xPosition) {
+        if (data.isEmpty()) {
+            return new BoxPlotData(
+                    new CandleEntry(xPosition, 0, 0, 0, 0),
+                    new Entry(xPosition, 0),
+                    new ArrayList<>()
+            );
         }
 
-        //Sort timestamp for correct display
-        TreeMap<String, Integer> sortedData = new TreeMap<>(heartTime);
-        createCandleChart(sortedData);
+        //Calculate statistics
+        float sum = 0;
+        float min = Float.MAX_VALUE;
+        float max = Float.MIN_VALUE;
+
+        for (float value : data) {
+            sum += value;
+            if (value < min) min = value;
+            if (value > max) max = value;
+        }
+
+        float avg = sum / data.size();
+
+        //Box range: avg ± 10, but clamped to actual data range
+        float boxLow = Math.max(avg - 10f, min);
+        float boxHigh = Math.min(avg + 10f, max);
+
+        //Find outliers (>10 BPM from average)
+        List<Entry> outliers = new ArrayList<>();
+        for (float value : data) {
+            if (Math.abs(value - avg) > 10f) {
+                outliers.add(new Entry(xPosition, value));
+            }
+        }
+
+        //CandleEntry(x, shadowHigh, shadowLow, open, close)
+        //shadowHigh/Low = whiskers (always min to max)
+        //open/close = box (avg ± 10, clamped)
+        CandleEntry candleEntry = new CandleEntry(
+                xPosition,
+                max,        //shadowHigh (whisker top)
+                min,        //shadowLow (whisker bottom)
+                boxLow,     //open (box bottom)
+                boxHigh     //close (box top)
+        );
+
+        Entry medianEntry = new Entry(xPosition, avg);
+
+        return new BoxPlotData(candleEntry, medianEntry, outliers);
     }
 
     @Override

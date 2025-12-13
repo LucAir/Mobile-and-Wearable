@@ -40,8 +40,8 @@
         app:layout_constraintVertical_bias="0.608"
         tools:layout_editor_absoluteX="1dp" />
 
-    <com.github.mikephil.charting.charts.CandleStickChart
-        android:id="@+id/candleStickChart"
+    <com.github.mikephil.charting.charts.CombinedChart
+        android:id="@+id/combinedChart"
         android:layout_width="match_parent"
         android:layout_height="409dp"
         app:layout_constraintBottom_toBottomOf="parent"
