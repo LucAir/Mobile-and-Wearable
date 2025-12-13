@@ -1,6 +1,7 @@
 package com.example.navigationbarstarter.ui.dashboard;
 
 import android.content.SharedPreferences;
+import android.util.Log;
 
 public class FakeMLAlgorithm {
     /**
@@ -25,6 +26,8 @@ public class FakeMLAlgorithm {
      * 1)HIGH heart-rate variability and HIGH heart-rate -> ACTIVE AND ENGAGED, but MONITOR (high heartbeats)
      * 2)LOW heart-rate variability and LOW heart-rate -> BREAK RECOMMENDED -> low energy and poor adaptability -> mental fatigue
      * 3)LOW heart-rate variability and HIGH heart-rate and -> STRESSED (WORSE SITUATION) -> BREAK
+     *
+     * Level 1 and 2 in the chart are handle with the same yellow color. Are considered as warnings.
      */
 
     public static final int STRESS_CRITICAL = 3;
@@ -32,10 +35,12 @@ public class FakeMLAlgorithm {
     public static final int STRESS_MONITOR = 1;
     public static final int STRESS_OPTIMAL_STATE = 0;
 
-    public static int detectStressLevel(int heartRate, double hrv, int baseline_hr, int baseline_hrv) {
+    public static int detectStressLevel(int heartRate, double hrv, int baseline_hr, float baseline_hrv) {
         //Determine if heart-rate is high relative to user's baseline
         boolean isHeartRateHigh = heartRate > (baseline_hr + 15);
-        boolean isHRVLow = hrv < (hrv * 0.7);
+        boolean isHRVLow = hrv < (baseline_hrv * 0.7);
+
+        Log.d("StressDebug", "BPM=" + heartRate + " HRV=" + hrv + " HRbaseline=" + baseline_hr + " HRVbaseline=" + baseline_hrv);
 
         //CRITICAL STRESS
         if (isHeartRateHigh && isHRVLow) {

@@ -106,6 +106,46 @@ public class CSVHeartbeatSimulator {
         handler.removeCallbacksAndMessages(null);
     }
 
+    //Load new CSV with timestamp instead of BPM
+    public static Map<Integer, List<String>> loadCsvTimestamp(InputStream csvInputStream) {
+        Map<Integer, List<String>> sessions = new HashMap<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream));
+            String line;
+            boolean firstLine = true;
+
+            while ((line = reader.readLine()) != null) {
+
+                //Skip header
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+
+                String[] parts = line.split(",", 2);
+                if (parts.length < 2) continue;
+
+                try {
+                    int sessionId = Integer.parseInt(parts[0].trim());
+                    String timestamp = parts[1].trim();
+
+                    //Insert into the map
+                    sessions.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(timestamp);
+                } catch (Exception ignored) {
+                    //Ignore malformed rows (must not be there in our case)
+                }
+            }
+
+            reader.close();
+            return sessions;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new HashMap<>();
+        }
+    }
+
     public void reset() {
         stopSimulation();
         currentIndex = 0;

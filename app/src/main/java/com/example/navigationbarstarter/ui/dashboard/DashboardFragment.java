@@ -1,6 +1,14 @@
 package com.example.navigationbarstarter.ui.dashboard;
 
 import static android.content.Context.MODE_PRIVATE;
+import android.util.Log;
+import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
+import static com.example.navigationbarstarter.data.HeartRateVariability.computeBPM;
+import static com.example.navigationbarstarter.data.HeartRateVariability.computeHRV;
+import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.STRESS_BREAK_RECOMMENDED;
+import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.STRESS_CRITICAL;
+import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.STRESS_MONITOR;
+import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.detectStressLevel;
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -10,12 +18,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
@@ -37,6 +45,7 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -61,6 +70,8 @@ public class DashboardFragment extends Fragment {
     private float userBaseline_hr;
     private float userBaseline_hrv;
 
+    private Map<Integer, List<String>> sessions;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -84,7 +95,14 @@ public class DashboardFragment extends Fragment {
         candleChart.setVisibility(View.INVISIBLE);
         txtFeature.setVisibility(View.INVISIBLE);
 
+        //Initialize hashmap
+        this.sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.two_sessions));
+        Log.d("CSV_DEBUG", "Session1 size:" + (sessions != null ? sessions.size() : "null"));
+
         getUserIdFromSharedPreferences();
+
+        dashboardViewModel.getBaselineHr(userId);
+        dashboardViewModel.getBaselineHrv(userId);
 
         setUpListener();
 
@@ -94,13 +112,14 @@ public class DashboardFragment extends Fragment {
         dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
             if (baselineHr != 0) {
                 this.userBaseline_hr = baselineHr;
-            }
-        });
 
-        //Checking if live variables has changed
-        dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
-            if (baselineHrv != 0) {
-                this.userBaseline_hrv = baselineHrv;
+                //Checking if live variables has changed
+                dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
+                    if (baselineHrv != 0) {
+                        this.userBaseline_hrv = baselineHrv;
+                        createHeartRateChartWithMinutes();
+                    }
+                });
             }
         });
 
@@ -109,12 +128,9 @@ public class DashboardFragment extends Fragment {
 
     //Used to retrieve UserID and so collect all the session it has in order to create charts
     private void getUserIdFromSharedPreferences() {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        this.userId = sharedPreferences.getLong("UserId", userId);
-    }
-
-    private void getUserBaselineValue() {
-
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        this.userId = sharedPreferences.getLong("userId", -1);
+        Log.d("DASH_DEBUG", "Loaded userId=" + userId);
     }
 
     private void setUpListener() {
@@ -148,153 +164,151 @@ public class DashboardFragment extends Fragment {
         });
     }
 
-    //TODO: change to a better hover
-    private void createHeartRateChartWithMinutes(TreeMap<String, Integer> allHeartData) {
+    private void createHeartRateChartWithMinutes() {
+        List<String> session1 = sessions.get(1);
 
-        //Statistics
-        int min = 0;
-        int max = 0;
-        int sum = 0;
-        double avg = 0.0;
+        //Compute BPM and HRV per minute (have same points)
+        List<Float> bpm = computeBPM(session1);
+        List<Float> hrv = computeHRV(session1);
 
-        //Get last 60 data points (or all if less than 60)
-        List<Map.Entry<String, Integer>> allEntries = new ArrayList<>(allHeartData.entrySet());
-        int totalPoints = allEntries.size();
-        int startIndex = Math.max(0, totalPoints - 60);
+        //Ensure same size (JUST TO BE SURE)
+        int size = Math.min(bpm.size(), hrv.size());
 
-        List<Entry> entries = new ArrayList<>();
+        //Build entries from the single source of truth
+        List<Entry> greenEntries = new ArrayList<>(); //Contains all BPM points (line)
+        List<Entry> yellowEntries = new ArrayList<>(); //Contains only warnings point (point)
+        List<Entry> redEntries = new ArrayList<>(); //Contains only critical point (point)
 
-        //Create entries with X = minutes (0-60)
-        for (int i = startIndex; i < totalPoints; i++) {
-            int minute = i - startIndex; // 0, 1, 2, ... up to 59
-            int bpm = allEntries.get(i).getValue();
-            entries.add(new Entry(minute, bpm));
-            if (min > allEntries.get(i).getValue()) {
-                min = allEntries.get(i).getValue();
+        float sum = 0;
+        int max = Integer.MIN_VALUE;
+
+        for (int i = 0; i < size; i++) {
+            float b = bpm.get(i);
+            float h = hrv.get(i);
+            greenEntries.add(new Entry(i, b));            //ALL points go to green
+
+            sum += b;
+            if (b > max) max = (int) b;
+
+            int stressLevel = detectStressLevel((int)b, h, (int) userBaseline_hr, userBaseline_hrv);
+            if (stressLevel == STRESS_CRITICAL) {
+                redEntries.add(new Entry(i, b));          //Same x and y
+            } else if (stressLevel == STRESS_BREAK_RECOMMENDED || stressLevel == STRESS_MONITOR) {
+                yellowEntries.add(new Entry(i, b));       // same x and y
             }
-            if (max < allEntries.get(i).getValue()) {
-                max = allEntries.get(i).getValue();
-            }
-            sum = sum + allEntries.get(i).getValue();
         }
 
-        avg = sum / 60;
+        float avg = sum / size;
 
-        if (entries.isEmpty()) {
-            heartRateChart.clear();
-            heartRateChart.invalidate();
-            return;
-        }
-
-        //Create dataset
-        LineDataSet dataSet = new LineDataSet(entries, "Heart Rate (BPM)");
-
-        //Styling for heartbeat line
-        dataSet.setColor(Color.rgb(255, 69, 58)); //Red color for heart
-        dataSet.setCircleColor(Color.rgb(255, 69, 58));
-        dataSet.setCircleRadius(2f);
-        dataSet.setDrawCircleHole(false);
-        dataSet.setLineWidth(2f);
-        dataSet.setDrawValues(false);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); //Smooth curve
-        dataSet.setCubicIntensity(0.2f);
-
-        //Add gradient fill (Areas under the line
-        dataSet.setDrawFilled(true);
-        dataSet.setFillColor(Color.rgb(255, 69, 58));
-        dataSet.setFillAlpha(50);
-
-        LineData lineData = new LineData(dataSet);
-
-        //Configure chart
-        heartRateChart.setData(lineData);
-        heartRateChart.getDescription().setEnabled(false);
+        //Chart settings
         heartRateChart.setDrawGridBackground(false);
+        heartRateChart.getDescription().setEnabled(false);
+        heartRateChart.getLegend().setEnabled(true);
+
+        //Enable touch and highlighting
         heartRateChart.setTouchEnabled(true);
         heartRateChart.setDragEnabled(true);
         heartRateChart.setScaleEnabled(true);
         heartRateChart.setPinchZoom(true);
+        heartRateChart.setHighlightPerTapEnabled(true);
+        heartRateChart.setHighlightPerDragEnabled(false);
+        heartRateChart.setMaxHighlightDistance(50f); // Only highlight if within 50 pixels
 
-        //Configure X axis (minutes)
-        XAxis xAxis = heartRateChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.LTGRAY);
-        xAxis.setGranularity(1f);
-        xAxis.setTextSize(10f);
-        xAxis.setAvoidFirstLastClipping(true);
-        xAxis.setAxisMinimum(0f);
-        xAxis.setAxisMaximum(59f); // Force 0-59 range
-        xAxis.setLabelCount(13, false); // Show 0, 5, 10, 15, 20... 60
-        xAxis.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                // Just show the minute number
-                return String.valueOf((int) value);
-            }
-        });
-
-        //Configure Y axis (BPM)
+        //Configure Y axis (left) - only left axis visible
         YAxis leftAxis = heartRateChart.getAxisLeft();
-        leftAxis.setDrawGridLines(true);
-        leftAxis.setGridColor(Color.LTGRAY);
-        leftAxis.setTextSize(10f);
-
-        //Find min and max BPM in current data
-        float minBpm = 50f;
-        float maxBpm = 0f;
-
-        for (Entry entry : entries) {
-            if (entry.getY() > maxBpm) {
-                maxBpm = entry.getY() + 10;
-            }
-            if (entry.getY() < minBpm) {
-                minBpm = entry.getY() - 5;
-            }
-        }
-
-        leftAxis.setAxisMinimum(minBpm);
-        leftAxis.setAxisMaximum(maxBpm);
-        leftAxis.setLabelCount(8, false);
+        leftAxis.setAxisMinimum(40f);  //Start from 40 BPM
+        leftAxis.setEnabled(true);
 
         YAxis rightAxis = heartRateChart.getAxisRight();
-        rightAxis.setEnabled(false);
+        rightAxis.setEnabled(false);  //Hide right Y axis
 
-        //Adding median value bpm as a line
-        LimitLine medianLine = new LimitLine((float) avg, "Median: " + (int)avg);
+        //Configure X axis (bottom) - only bottom axis visible
+        XAxis xAxis = heartRateChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);  //Show X axis at bottom
+        xAxis.setEnabled(true);
+
+        //GREEN dataset: full line
+        LineDataSet greenSet = new LineDataSet(greenEntries, "Heart Rate (BPM)");
+        greenSet.setColor(Color.GREEN);
+        greenSet.setLineWidth(3f);
+        greenSet.setMode(LineDataSet.Mode.LINEAR);
+        greenSet.setDrawFilled(true);  //Enable fill
+        greenSet.setFillColor(Color.GREEN);
+        greenSet.setFillAlpha(65);
+        greenSet.setDrawValues(false);
+        greenSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        greenSet.setDrawCircles(false);
+        greenSet.setDrawCircleHole(false);
+        greenSet.setHighlightEnabled(false); // ADD THIS - Disable highlighting for green line
+
+        //YELLOW overlay: only circles
+        LineDataSet yellowSet = new LineDataSet(yellowEntries, "Warning");
+        yellowSet.setColor(Color.TRANSPARENT);
+        yellowSet.setDrawValues(false);
+        yellowSet.setDrawCircles(true);
+        yellowSet.setCircleColor(Color.YELLOW);
+        yellowSet.setCircleRadius(6f);
+        yellowSet.setDrawCircleHole(false);
+        yellowSet.setLineWidth(0f);
+        yellowSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        yellowSet.setHighlightEnabled(true);
+        yellowSet.setDrawHorizontalHighlightIndicator(false);
+        yellowSet.setDrawVerticalHighlightIndicator(false);
+
+        //RED overlay: only circles
+        LineDataSet redSet = new LineDataSet(redEntries, "Critical");
+        redSet.setColor(Color.TRANSPARENT);
+        redSet.setDrawValues(false);
+        redSet.setDrawCircles(true);
+        redSet.setCircleColor(Color.RED);
+        redSet.setCircleRadius(6f);
+        redSet.setDrawCircleHole(false);
+        redSet.setLineWidth(0f);
+        redSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        redSet.setHighlightEnabled(true);
+        redSet.setDrawHorizontalHighlightIndicator(false);
+        redSet.setDrawVerticalHighlightIndicator(false);
+
+        //ADD MEDIAN LINE
+        LimitLine medianLine = new LimitLine(avg, "Median: " + (int) avg);
         medianLine.setLineColor(Color.BLUE);
         medianLine.setLineWidth(2f);
         medianLine.enableDashedLine(10f, 10f, 0f);
         leftAxis.addLimitLine(medianLine);
 
-        //Add legend configuration
-        heartRateChart.getLegend().setTextSize(12f);
-        heartRateChart.getLegend().setXOffset(0f);
-        heartRateChart.getLegend().setYOffset(0f);
+        //Add green first, overlay sets after so they render on top
+        LineData lineData = new LineData();
+        lineData.addDataSet(greenSet);
+        lineData.addDataSet(yellowSet);
+        lineData.addDataSet(redSet);
 
-        //Animate chart
-        heartRateChart.animateX(800);
-        heartRateChart.invalidate();
+        heartRateChart.setData(lineData);
 
-        //Add a listener to the chart for the over
-        int finalMax = max;
-        int finalMin = min;
-        double finalAvg = avg;
+        // Set custom marker for showing details on tap
+        heartRateChart.setMarker(new StressMarkerView(getContext(), bpm, hrv, (int)userBaseline_hr, userBaseline_hrv));
+
+        // ADD THIS - Custom listener to only show marker on yellow/red points
         heartRateChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
             @Override
             public void onValueSelected(Entry e, Highlight h) {
-                //When clicking on a point
-                int minute = (int) e.getX();
-                int bpm = (int) e.getY();
-                Toast.makeText(getContext(), "Minute: " + minute + ", BPM: " + bpm, Toast.LENGTH_SHORT).show();
+                // Only show marker if it's a yellow or red point (dataset index 1 or 2)
+                if (h.getDataSetIndex() == 1 || h.getDataSetIndex() == 2) {
+                    heartRateChart.highlightValue(h);
+                } else {
+                    heartRateChart.highlightValue(null); // Clear highlight
+                }
             }
+
             @Override
             public void onNothingSelected() {
-                //When clicking on the area (not a specific point)
-                Toast.makeText(getContext(), "Max: " + finalMax + " BPM, Min: " + finalMin + " BPM, Avg: " + (int) finalAvg, Toast.LENGTH_SHORT).show();
+                // Do nothing
             }
         });
+
+        heartRateChart.animateX(800);
+        heartRateChart.invalidate();
     }
+
 
     /**
      * Create candlestick chart where each candle represents a session
@@ -427,8 +441,6 @@ public class DashboardFragment extends Fragment {
 
         //Sort timestamp for correct display
         TreeMap<String, Integer> sortedData = new TreeMap<>(heartTime);
-
-        createHeartRateChartWithMinutes(sortedData);
         createCandleChart(sortedData);
     }
 
