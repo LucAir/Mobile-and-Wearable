@@ -24,7 +24,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.R;
-import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
 import com.github.mikephil.charting.charts.CandleStickChart;
@@ -45,8 +44,6 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -106,8 +103,6 @@ public class DashboardFragment extends Fragment {
 
         setUpListener();
 
-        loadDataHeartBeat();
-
         //Checking if live variables has changed
         dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
             if (baselineHr != 0) {
@@ -118,6 +113,7 @@ public class DashboardFragment extends Fragment {
                     if (baselineHrv != 0) {
                         this.userBaseline_hrv = baselineHrv;
                         createHeartRateChartWithMinutes();
+                        createCandleChart();
                     }
                 });
             }
@@ -166,10 +162,13 @@ public class DashboardFragment extends Fragment {
 
     private void createHeartRateChartWithMinutes() {
         List<String> session1 = sessions.get(1);
-
-        //Compute BPM and HRV per minute (have same points)
-        List<Float> bpm = computeBPM(session1);
-        List<Float> hrv = computeHRV(session1);
+        List<Float> bpm = new ArrayList<>();
+        List<Float> hrv = new ArrayList<>();
+        if (session1 != null) {
+            //Compute BPM and HRV per minute (have same points)
+            bpm = computeBPM(session1);
+            hrv = computeHRV(session1);
+        }
 
         //Ensure same size (JUST TO BE SURE)
         int size = Math.min(bpm.size(), hrv.size());
@@ -309,75 +308,110 @@ public class DashboardFragment extends Fragment {
         heartRateChart.invalidate();
     }
 
-
     /**
      * Create candlestick chart where each candle represents a session
      * High = max BPM, Low = min BPM, Open/Close = start/end BPM
      */
-    private void createCandleChart(TreeMap<String, Integer> allHeartData) {
+    private void createCandleChart() {
 
-        if (allHeartData == null || allHeartData.isEmpty()) {
+        /**
+         * Here I wanted to check if two list contains data. I don't do nested if, because if the user
+         * has only one session recorded, I want him to be able to see the candleChart
+         */
+
+        List<String> session1 = sessions.get(1);
+        List<String> session2 = sessions.get(2);
+        List<Float> bpm1 = new ArrayList<>();
+        List<Float> hrv1 = new ArrayList<>();
+        List<Float> bpm2 = new ArrayList<>();
+        List<Float> hrv2 = new ArrayList<>();
+
+        //Check if session1 contains data
+        if(session1 != null && !session1.isEmpty()) {
+            bpm1 = computeBPM(session1);
+            hrv1 = computeHRV(session1);
+        }
+
+        //Check if session 2 contains data
+        if(session2 != null && !session2.isEmpty()) {
+            bpm2 = computeBPM(session2);
+            hrv2 = computeHRV(session2);
+        }
+
+        if (session1.isEmpty() && session2.isEmpty()) {
             return;
         }
 
-        //Get last 120 data points (or all if less than 120)
-        List<Map.Entry<String, Integer>> allEntries = new ArrayList<>(allHeartData.entrySet());
-        int totalPoints = allEntries.size();
-        int startIndex = Math.max(0, totalPoints - 120);
-
-        //Split into 2 sessions of 60 points each
         List<CandleEntry> candleEntries = new ArrayList<>();
 
-        for (int sessionNum = 0; sessionNum < 2; sessionNum++) {
-            int sessionStartIndex = startIndex + (sessionNum * 60);
-            int sessionEndIndex = Math.min(sessionStartIndex + 60, totalPoints);
+        //Compute entries:
+        // Calculate stats for session 1 (if exists)
+        if (!bpm1.isEmpty()) {
+            float min = Float.MAX_VALUE;
+            float max = Float.MIN_VALUE;
+            float sum = 0;
+            float firstBpm = bpm1.get(0);
+            float lastBpm = bpm1.get(bpm1.size() - 1);
 
-            if (sessionStartIndex >= totalPoints) break;
-
-            //Calculate stats for this session
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
-            int sum = 0;
-            int count = 0;
-            int firstBpm = 0;
-            int lastBpm = 0;
-
-            for (int i = sessionStartIndex; i < sessionEndIndex; i++) {
-                int bpm = allEntries.get(i).getValue();
-
-                if (count == 0) firstBpm = bpm;
-                lastBpm = bpm;
-
-                min = Math.min(min, bpm);
-                max = Math.max(max, bpm);
-                sum += bpm;
-                count++;
+            for (float b : bpm1) {
+                min = Math.min(min, b);
+                max = Math.max(max, b);
+                sum += b;
             }
 
-            //TODO CHECK USAGE OF THIS
-            float avg = count > 0 ? (float) sum / count : 0;
+            float avg = sum / bpm1.size();
 
             //CandleEntry(x, high, low, open, close)
             candleEntries.add(new CandleEntry(
-                    sessionNum,     //X position (0 or 1)
-                    max,           //High
-                    min,           //Low
-                    firstBpm,      //Open (first BPM)
-                    lastBpm        //Close (last BPM)
+                    0,         //X position for session 1
+                    max,       //High
+                    min,       //Low
+                    firstBpm,  //Open (first BPM)
+                    lastBpm    //Close (last BPM)
+            ));
+        }
+
+        //Calculate stats for session 2 (if exists)
+        if (!bpm2.isEmpty()) {
+            float min = Float.MAX_VALUE;
+            float max = Float.MIN_VALUE;
+            float sum = 0;
+            float firstBpm = bpm2.get(0);
+            float lastBpm = bpm2.get(bpm2.size() - 1);
+
+            for (float b : bpm2) {
+                min = Math.min(min, b);
+                max = Math.max(max, b);
+                sum += b;
+            }
+
+            float avg = sum / bpm2.size();
+
+            //CandleEntry(x, high, low, open, close)
+            candleEntries.add(new CandleEntry(
+                    1,
+                    max,
+                    min,
+                    firstBpm,
+                    lastBpm
             ));
         }
 
         CandleDataSet dataSet = new CandleDataSet(candleEntries, "Sessions");
 
         //Styling
-        dataSet.setDecreasingColor(Color.rgb(255, 69, 58)); //Red for decreasing
+        dataSet.setDecreasingColor(Color.rgb(255, 69, 58));
         dataSet.setDecreasingPaintStyle(Paint.Style.FILL);
-        dataSet.setIncreasingColor(Color.rgb(52, 199, 89)); //Green for increasing
+        dataSet.setIncreasingColor(Color.rgb(52, 199, 89));
         dataSet.setIncreasingPaintStyle(Paint.Style.FILL);
         dataSet.setShadowColor(Color.DKGRAY);
         dataSet.setShadowWidth(2f);
         dataSet.setDrawValues(false);
         dataSet.setNeutralColor(Color.BLUE);
+
+        //Enable highlighting for interactive features
+        dataSet.setHighlightEnabled(true);
+        dataSet.setHighLightColor(Color.WHITE);
 
         CandleData candleData = new CandleData(dataSet);
 
@@ -389,6 +423,8 @@ public class DashboardFragment extends Fragment {
         candleChart.setDragEnabled(true);
         candleChart.setScaleEnabled(true);
         candleChart.setPinchZoom(true);
+        candleChart.setHighlightPerTapEnabled(true);
+        candleChart.setHighlightPerDragEnabled(false);
 
         //X axis
         XAxis xAxisCandle = candleChart.getXAxis();
@@ -409,39 +445,26 @@ public class DashboardFragment extends Fragment {
         leftAxisCandle.setDrawGridLines(true);
         leftAxisCandle.setGridColor(Color.LTGRAY);
         leftAxisCandle.setTextSize(10f);
+        leftAxisCandle.setAxisMinimum(40f); //Start from 40 BPM like the line chart
 
-        //Find min and max in current data
-        float minBpm = 50f;
-        float maxBpm = 0f;
-        for (Entry entry : candleEntries) {
-            if (entry.getY() > maxBpm) {
-                maxBpm = entry.getY() + 10;
-            }
-            if (entry.getY() < minBpm) {
-                minBpm = entry.getY() - 5;
+        //Find max in current data
+        float maxBpm = 40f;
+        for (CandleEntry entry : candleEntries) {
+            if (entry.getHigh() > maxBpm) {
+                maxBpm = entry.getHigh() + 10;
             }
         }
-
-        leftAxisCandle.setAxisMinimum(minBpm);
         leftAxisCandle.setAxisMaximum(maxBpm);
 
         YAxis rightAxisCandle = candleChart.getAxisRight();
         rightAxisCandle.setEnabled(false);
 
+        //Set custom marker for candle chart
+        candleChart.setMarker(new CandleMarkerView(getContext(), bpm1, hrv1, bpm2, hrv2, (int)userBaseline_hr, userBaseline_hrv));
+
         candleChart.getLegend().setTextSize(12f);
         candleChart.animateX(1000);
         candleChart.invalidate();
-    }
-
-    private void loadDataHeartBeat() {
-        Map<String, Integer> heartTime = CSVHeartbeatSimulator.heartTime;
-        if (heartTime == null || heartTime.isEmpty()) {
-            return;
-        }
-
-        //Sort timestamp for correct display
-        TreeMap<String, Integer> sortedData = new TreeMap<>(heartTime);
-        createCandleChart(sortedData);
     }
 
     @Override
