@@ -25,8 +25,6 @@ public class DashboardRepository {
     public void getUserBaselineHr(Long id, DashboardRepository.ResultCallback callback) {
         executor.execute(() -> {
             UserData userData = userDataDao.getUserById(id);
-            userData.setBaselineHr(65f);
-            userData.setBaselineHrv(70f);
             userDataDao.updateUser(userData);
             float baselineHr = userData.getBaselineHr();
             callback.onResult(baselineHr);
