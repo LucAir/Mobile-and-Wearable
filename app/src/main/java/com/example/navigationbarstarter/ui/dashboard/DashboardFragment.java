@@ -322,18 +322,12 @@ public class DashboardFragment extends Fragment {
     }
 
     /**
-     * Create box plot chart where each box represents a session's BPM distribution
-     */
-    /**
-     * Create box plot chart where each box represents a session's BPM distribution
-     */
-    /**
      * Create box plot chart where box represents ±10 BPM around average
      * Outliers (>10 BPM from avg) shown as individual points
      * Whiskers always go from absolute min to max
      */
     private void createCandleChart() {
-        // Load sessions
+        //Load sessions
         List<String> session1 = sessions.get(1);
         List<String> session2 = sessions.get(2);
 
@@ -342,7 +336,7 @@ public class DashboardFragment extends Fragment {
         List<Float> bpm2 = new ArrayList<>();
         List<Float> hrv2 = new ArrayList<>();
 
-        // Compute BPM + HRV per session
+        //Compute BPM + HRV per session
         if (session1 != null && !session1.isEmpty()) {
             bpm1 = computeBPM(session1);
             hrv1 = computeHRV(session1);
@@ -355,12 +349,12 @@ public class DashboardFragment extends Fragment {
 
         if (bpm1.isEmpty() && bpm2.isEmpty()) return;
 
-        // Data structures
+        //Data structures
         List<CandleEntry> candleEntries = new ArrayList<>();
         List<Entry> medianEntries = new ArrayList<>();
         List<Entry> outlierEntries = new ArrayList<>();
 
-        // Process Session 1
+        //Process Session 1
         if (!bpm1.isEmpty()) {
             BoxPlotData data = computeBoxPlotData(bpm1, 0);
             candleEntries.add(data.candleEntry);
@@ -368,7 +362,7 @@ public class DashboardFragment extends Fragment {
             outlierEntries.addAll(data.outliers);
         }
 
-        // Process Session 2
+        //Process Session 2
         if (!bpm2.isEmpty()) {
             BoxPlotData data = computeBoxPlotData(bpm2, 1);
             candleEntries.add(data.candleEntry);
@@ -376,13 +370,13 @@ public class DashboardFragment extends Fragment {
             outlierEntries.addAll(data.outliers);
         }
 
-        // Create CandleDataSet for box + whiskers
+        //Create CandleDataSet for box + whiskers
         CandleDataSet candleDataSet = new CandleDataSet(candleEntries, "BPM Distribution");
-        candleDataSet.setShadowColor(Color.BLACK); // Whisker lines (min to max)
+        candleDataSet.setShadowColor(Color.BLACK); //Whisker lines (min to max)
         candleDataSet.setShadowWidth(2f);
-        candleDataSet.setDecreasingColor(Color.parseColor("#4A90E2")); // Box color
+        candleDataSet.setDecreasingColor(Color.parseColor("#4A90E2")); //Box color
         candleDataSet.setDecreasingPaintStyle(Paint.Style.FILL);
-        candleDataSet.setIncreasingColor(Color.parseColor("#4A90E2")); // Box color
+        candleDataSet.setIncreasingColor(Color.parseColor("#4A90E2")); //Box color
         candleDataSet.setIncreasingPaintStyle(Paint.Style.FILL);
         candleDataSet.setNeutralColor(Color.parseColor("#4A90E2"));
         candleDataSet.setDrawValues(false);
@@ -390,14 +384,14 @@ public class DashboardFragment extends Fragment {
 
         CandleData candleData = new CandleData(candleDataSet);
 
-        // Median markers (red squares)
+        //Median markers (red squares)
         ScatterDataSet medianSet = new ScatterDataSet(medianEntries, "Average");
         medianSet.setColor(Color.RED);
         medianSet.setScatterShape(ScatterChart.ScatterShape.SQUARE);
         medianSet.setScatterShapeSize(12f);
         medianSet.setDrawValues(false);
 
-        // Outlier points (black circles)
+        //Outlier points (black circles)
         ScatterDataSet outlierSet = new ScatterDataSet(outlierEntries, "Outliers");
         outlierSet.setColor(Color.BLACK);
         outlierSet.setScatterShape(ScatterChart.ScatterShape.CIRCLE);
@@ -410,19 +404,19 @@ public class DashboardFragment extends Fragment {
             scatterData.addDataSet(outlierSet);
         }
 
-        // Combine all data
+        //Combine all data
         CombinedData combinedData = new CombinedData();
         combinedData.setData(candleData);
         combinedData.setData(scatterData);
 
-        // Configure chart for BPM data
+        //Configure chart for BPM data
         combinedChart.setData(combinedData);
         combinedChart.getDescription().setEnabled(false);
 
-        // Right axis disabled
+        //Right axis disabled
         combinedChart.getAxisRight().setEnabled(false);
 
-        // Left Y-axis (BPM values)
+        //Left Y-axis (BPM values)
         YAxis leftAxis = combinedChart.getAxisLeft();
         leftAxis.setAxisMinimum(40f);
         leftAxis.setAxisMaximum(200f);
@@ -431,7 +425,7 @@ public class DashboardFragment extends Fragment {
         leftAxis.setAxisLineWidth(1f);
         leftAxis.setTextSize(12f);
 
-        // X-axis (Sessions)
+        //X-axis (Sessions)
         XAxis xAxis = combinedChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
@@ -447,7 +441,7 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-        // Legend
+        //Legend
         Legend legend = combinedChart.getLegend();
         legend.setEnabled(true);
         legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
@@ -459,7 +453,7 @@ public class DashboardFragment extends Fragment {
         combinedChart.setExtraBottomOffset(10f);
         combinedChart.setExtraTopOffset(10f);
 
-        // Optional: Marker
+        //Marker
         combinedChart.setMarker(
                 new CandleMarkerView(
                         getContext(),
@@ -503,7 +497,7 @@ public class DashboardFragment extends Fragment {
             );
         }
 
-        // Calculate statistics
+        //Calculate statistics
         float sum = 0;
         float min = Float.MAX_VALUE;
         float max = Float.MIN_VALUE;
@@ -516,7 +510,7 @@ public class DashboardFragment extends Fragment {
 
         float avg = sum / data.size();
 
-        // Box range: avg ± 10, but clamped to actual data range
+        //Box range: avg ± 10, but clamped to actual data range
         float boxLow = Math.max(avg - 10f, min);
         float boxHigh = Math.min(avg + 10f, max);
 
@@ -533,10 +527,10 @@ public class DashboardFragment extends Fragment {
         //open/close = box (avg ± 10, clamped)
         CandleEntry candleEntry = new CandleEntry(
                 xPosition,
-                max,        // shadowHigh (whisker top)
-                min,        // shadowLow (whisker bottom)
-                boxLow,     // open (box bottom)
-                boxHigh     // close (box top)
+                max,        //shadowHigh (whisker top)
+                min,        //shadowLow (whisker bottom)
+                boxLow,     //open (box bottom)
+                boxHigh     //close (box top)
         );
 
         Entry medianEntry = new Entry(xPosition, avg);
