@@ -18,6 +18,6 @@ You might be wondering what makes our app different from others on the market:
 - If you’re a bit of a nerd 🤓 and love charts, we’ve got you covered. In the **Analytics 📊** section, you’ll find two types of visualizations showing how your sessions are going:  
   - **Line Chart**: Shows details about your last session. Green areas indicate focused periods, while red and yellow points indicate lost attention (red) or moments when focus was dropping but you were still able to study (yellow).  
   - **Boxplot**: Allows you to compare different sessions. By clicking on a section, you can see the number of distractions. The Y-axis shows your heartbeat, so you can see in which sections you were more agitated.  
-  - For a third visualization, we welcome your suggestions—be creative and tell us what you’d like to see ❤️
+  - For a third visualization, we welcome your suggestions, be creative and tell us what you’d like to see ❤️
 
 #### Technical Details and workflow:
