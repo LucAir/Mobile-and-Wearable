@@ -185,16 +185,16 @@ public class DashboardFragment extends Fragment {
         for (int i = 0; i < size; i++) {
             float b = bpm.get(i);
             float h = hrv.get(i);
-            greenEntries.add(new Entry(i, b));            //ALL points go to green
+            greenEntries.add(new Entry(i, b)); //ALL points go to green
 
             sum += b;
             if (b > max) max = (int) b;
 
             int stressLevel = detectStressLevel((int)b, h, (int) userBaseline_hr, userBaseline_hrv);
             if (stressLevel == STRESS_CRITICAL) {
-                redEntries.add(new Entry(i, b));          //Same x and y
+                redEntries.add(new Entry(i, b));  //Same x and y
             } else if (stressLevel == STRESS_BREAK_RECOMMENDED || stressLevel == STRESS_MONITOR) {
-                yellowEntries.add(new Entry(i, b));       // same x and y
+                yellowEntries.add(new Entry(i, b)); //Same x and y
             }
         }
 
@@ -212,7 +212,7 @@ public class DashboardFragment extends Fragment {
         heartRateChart.setPinchZoom(true);
         heartRateChart.setHighlightPerTapEnabled(true);
         heartRateChart.setHighlightPerDragEnabled(false);
-        heartRateChart.setMaxHighlightDistance(50f); // Only highlight if within 50 pixels
+        heartRateChart.setMaxHighlightDistance(50f); //Only highlight if within 50 pixels
 
         //Configure Y axis (left) - only left axis visible
         YAxis leftAxis = heartRateChart.getAxisLeft();
@@ -239,7 +239,7 @@ public class DashboardFragment extends Fragment {
         greenSet.setAxisDependency(YAxis.AxisDependency.LEFT);
         greenSet.setDrawCircles(false);
         greenSet.setDrawCircleHole(false);
-        greenSet.setHighlightEnabled(false); // ADD THIS - Disable highlighting for green line
+        greenSet.setHighlightEnabled(false);
 
         //YELLOW overlay: only circles
         LineDataSet yellowSet = new LineDataSet(yellowEntries, "Warning");
@@ -284,14 +284,14 @@ public class DashboardFragment extends Fragment {
 
         heartRateChart.setData(lineData);
 
-        // Set custom marker for showing details on tap
+        //Set custom marker for showing details on tap
         heartRateChart.setMarker(new StressMarkerView(getContext(), bpm, hrv, (int)userBaseline_hr, userBaseline_hrv));
 
-        // ADD THIS - Custom listener to only show marker on yellow/red points
+        //Custom listener to only show marker on yellow/red points
         heartRateChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
             @Override
             public void onValueSelected(Entry e, Highlight h) {
-                // Only show marker if it's a yellow or red point (dataset index 1 or 2)
+                //Only show marker if it's a yellow or red point (dataset index 1 or 2)
                 if (h.getDataSetIndex() == 1 || h.getDataSetIndex() == 2) {
                     heartRateChart.highlightValue(h);
                 } else {
