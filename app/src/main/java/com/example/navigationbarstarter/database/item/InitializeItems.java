@@ -25,7 +25,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Inter Jersey",
                 Rarity.RARE,
-                100,
+                200,
                 Type.TSHIRT,
                 R.drawable.inter_suit
         ));
@@ -41,7 +41,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Super-mario Suit",
                 Rarity.LEGENDARY,
-                1000,
+                1500,
                 Type.TSHIRT,
                 R.drawable.supermario_suit
         ));
@@ -61,7 +61,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Inter Snake",
                 Rarity.RARE,
-                1000,
+                120,
                 Type.PET,
                 R.drawable.inter_pet
         ));
@@ -69,7 +69,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Superman dog",
                 Rarity.LEGENDARY,
-                1500,
+                3000,
                 Type.PET,
                 R.drawable.superman_pet
         ));
@@ -97,7 +97,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "San Siro",
                 Rarity.RARE,
-                1000,
+                180,
                 Type.BACKGROUND,
                 R.drawable.inter_background
         ));
@@ -113,7 +113,7 @@ public class InitializeItems {
         items.add(new ItemsData(
                 "Super-mario level",
                 Rarity.LEGENDARY,
-                1500,
+                3000,
                 Type.BACKGROUND,
                 R.drawable.supermario_background
         ));

@@ -27,6 +27,7 @@ import com.example.navigationbarstarter.databinding.FragmentSettingsBinding;
 import com.example.navigationbarstarter.ui.access.LoginActivity;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.Locale;
 import java.util.Objects;
 
 public class SettingsFragment extends Fragment {
@@ -34,7 +35,7 @@ public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding binding;
     private TextView settingsTitle;
     private ImageView ivProfileImage;
-    private TextInputEditText etName, etSurname, etEmail, etUsername;
+    private TextInputEditText etName, etSurname, etEmail, etUsername, etBaseline;
     private Button btnChangePassword, btnSave, btnLogout;
     private ActivityResultLauncher<Intent> pickImageLauncher;
     private Uri selectedImageUri; // store the selected URI
@@ -114,6 +115,7 @@ public class SettingsFragment extends Fragment {
         etSurname = binding.etSurname;
         etUsername = binding.etUsername;
         etEmail = binding.etEmail;
+        etBaseline = binding.etBaseline;
         btnChangePassword = binding.btnChangePassword;
         btnSave = binding.btnSave;
         btnLogout = binding.btnLogout;
@@ -125,6 +127,15 @@ public class SettingsFragment extends Fragment {
         etSurname.setText(userData.getSurname());
         etUsername.setText(userData.getUsername());
         etEmail.setText(userData.getEmail());
+
+
+        // verify if baseline is valid
+        if (userData.getBaselineHr() > 0) {
+            etBaseline.setText(String.format(Locale.getDefault(), "%.1f BPM", userData.getBaselineHr()));
+        } else {
+            etBaseline.setText("Not calculated yet");
+        }
+
 
         //Load profile picture
         String imageUri = userData.getProfileImageUri();

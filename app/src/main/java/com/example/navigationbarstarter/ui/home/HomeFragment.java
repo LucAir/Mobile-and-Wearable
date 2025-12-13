@@ -2,26 +2,29 @@ package com.example.navigationbarstarter.ui.home;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
 import com.example.navigationbarstarter.databinding.FragmentHomeBinding;
@@ -47,10 +50,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private View pulseCircleOuter;
     private View pulseCircleInner;
 
-    // New Buttons
     private MaterialButton btnPlay;
     private MaterialButton btnStop;
     private MaterialButton btnReset;
+    private MaterialButton btnTest;
 
     // Logic Variables
     private int consecutiveHighBpmCount = 0;
@@ -96,7 +99,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // PLAY BUTTON (Start/Resume)
         btnPlay.setOnClickListener(v -> {
             if (!homeViewModel.isTimerRunning()) {
-                homeViewModel.toggleTimer(); // Starts timer
+                homeViewModel.toggleTimer();
                 updateUIState();
             }
         });
@@ -104,7 +107,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // STOP BUTTON (Pause)
         btnStop.setOnClickListener(v -> {
             if (homeViewModel.isTimerRunning()) {
-                homeViewModel.toggleTimer(); // Pauses timer
+                homeViewModel.toggleTimer();
                 updateUIState();
             }
         });
@@ -115,6 +118,8 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             consecutiveHighBpmCount = 0;
             updateUIState();
         });
+
+        btnTest.setOnClickListener(v -> showTestConfirmationDialog());
 
         // 3. Observe Heart Rate
         homeViewModel.getHeartRate().observe(getViewLifecycleOwner(), bpm -> {
@@ -132,6 +137,101 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         return root;
     }
 
+    private void showTestConfirmationDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Start Health Test")
+                .setMessage("This test will last for about two minutes.\n\nDo you want to proceed?")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // Start the second part of the flow
+                    showMonitoringDialog();
+                })
+                .show();
+    }
+
+    private void showMonitoringDialog() {
+        // 1. Inflate the custom layout
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View dialogView = inflater.inflate(R.layout.dialog_heart_test, null);
+
+        // 2. Build the Dialog
+        AlertDialog testDialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .setCancelable(false) // User must press Cancel button to exit
+                .create();
+
+        // make background transparent to see rounded corners if needed
+        if (testDialog.getWindow() != null) {
+            testDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // 3. Initialize Views inside the dialog
+        ImageView ivHeartTest = dialogView.findViewById(R.id.ivHeartTest);
+        View viewPulseTest = dialogView.findViewById(R.id.viewPulseTest);
+        TextView tvTimer = dialogView.findViewById(R.id.tvTestTimer);
+        Button btnCancel = dialogView.findViewById(R.id.btnCancelTest);
+
+        // 4. Start Animations for the Dialog
+        ObjectAnimator pulseAnim = ObjectAnimator.ofFloat(viewPulseTest, "scaleX", 1f, 1.4f);
+        pulseAnim.setRepeatCount(ValueAnimator.INFINITE);
+        pulseAnim.setRepeatMode(ValueAnimator.REVERSE);
+        pulseAnim.setDuration(1000);
+
+        ObjectAnimator pulseAnimY = ObjectAnimator.ofFloat(viewPulseTest, "scaleY", 1f, 1.4f);
+        pulseAnimY.setRepeatCount(ValueAnimator.INFINITE);
+        pulseAnimY.setRepeatMode(ValueAnimator.REVERSE);
+        pulseAnimY.setDuration(1000);
+
+        ObjectAnimator heartBeat = ObjectAnimator.ofFloat(ivHeartTest, "scaleX", 1f, 1.2f);
+        heartBeat.setRepeatCount(ValueAnimator.INFINITE);
+        heartBeat.setRepeatMode(ValueAnimator.REVERSE);
+        heartBeat.setDuration(800);
+
+        ObjectAnimator heartBeatY = ObjectAnimator.ofFloat(ivHeartTest, "scaleY", 1f, 1.2f);
+        heartBeatY.setRepeatCount(ValueAnimator.INFINITE);
+        heartBeatY.setRepeatMode(ValueAnimator.REVERSE);
+        heartBeatY.setDuration(800);
+
+        pulseAnim.start();
+        pulseAnimY.start();
+        heartBeat.start();
+        heartBeatY.start();
+
+        // 5. Start a 2-minute Countdown
+        CountDownTimer testTimer = new CountDownTimer(120000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                long minutes = (millisUntilFinished / 1000) / 60;
+                long seconds = (millisUntilFinished / 1000) % 60;
+                tvTimer.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+            }
+
+            @Override
+            public void onFinish() {
+                testDialog.dismiss();
+
+                // Save baseline
+                if (currentUserId != -1) {
+                    homeViewModel.calculateAndSaveBaseline(currentUserId);
+                }
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Test Complete")
+                        .setMessage("The monitoring session is finished. Your baseline has been updated.")
+                        .setPositiveButton("OK", null)
+                        .show();
+            }
+        };
+        testTimer.start();
+
+        // 6. Handle Cancel Button
+        btnCancel.setOnClickListener(v -> {
+            testTimer.cancel();
+            testDialog.dismiss();
+        });
+
+        testDialog.show();
+    }
+
     private void updateUIState() {
         boolean isRunning = homeViewModel.isTimerRunning();
         long totalTime = homeViewModel.getCurrentTotalTime();
@@ -139,31 +239,33 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // Update Status Text based on state
         if (isRunning) {
             focusModeStatus.setText("Focus Mode: Active");
-            // Optional: visually disable Play button to show it's active
             btnPlay.setAlpha(0.5f);
+            btnPlay.setEnabled(false);
             btnStop.setAlpha(1.0f);
+            btnStop.setEnabled(true);
         } else {
             if (totalTime > 0) {
                 focusModeStatus.setText("Focus Mode: Paused");
             } else {
                 focusModeStatus.setText("Focus Mode: Idle");
             }
-            // Optional: visually enable Play button
             btnPlay.setAlpha(1.0f);
+            btnPlay.setEnabled(true);
             btnStop.setAlpha(0.5f);
+            btnStop.setEnabled(false);
         }
 
-        // Update Timer Text
+        // Timer Text with BPM
         long seconds = (totalTime / 1000) % 60;
         long minutes = (totalTime / 1000) / 60;
         String timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
 
-        // Show BPM next to timer only if running (or always if you prefer)
-        String bpmString = isRunning ? String.format(Locale.getDefault(), "\n%d BPM", currentHeartRate) : "";
+        String bpmString = "";
+        if (isRunning && currentHeartRate > 0) {
+            bpmString = String.format(Locale.getDefault(), " | %d BPM", currentHeartRate);
+        }
 
-        // Note: Layout constraints might need checking if BPM adds a new line,
-        // strictly following your design, we might just keep the time:
-        timerText.setText(timeString);
+        timerText.setText(timeString + bpmString);
 
         // Update Progress
         int progressPercentage = (int) ((totalTime / 1000) % 1500) / 15;
@@ -219,10 +321,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         pulseCircleOuter = binding.pulseCircleOuter;
         pulseCircleInner = binding.pulseCircleInner;
 
-        // New Buttons Mapping
         btnPlay = binding.btnPlay;
         btnStop = binding.btnStop;
         btnReset = binding.btnReset;
+        btnTest = binding.btnTest;
     }
 
     private void updateHeartRateUI() {

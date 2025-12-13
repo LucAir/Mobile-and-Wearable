@@ -9,11 +9,17 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.data.CSVHeartbeatSimulator;
 import com.example.navigationbarstarter.data.HeartRateVariability;
+import com.example.navigationbarstarter.database.AppDatabase;
+import com.example.navigationbarstarter.database.UserData;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class HomeViewModel extends AndroidViewModel {
 
@@ -152,5 +158,73 @@ public class HomeViewModel extends AndroidViewModel {
         if (heartbeatSimulator != null) {
             heartbeatSimulator.stopSimulation();
         }
+    }
+
+
+    public void calculateAndSaveBaseline(long userId) {
+        // separated thread to avoid blocking the UI
+        new Thread(() -> {
+            try {
+                // open the CSV file
+                InputStream is = getApplication().getResources().openRawResource(R.raw.two_sessions);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+
+                String line;
+                // dont consider header
+                reader.readLine();
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+
+                long previousTime = 0;
+                double totalBpm = 0;
+                int count = 0;
+
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(",");
+                    if (parts.length >= 2) {
+                        String dateString = parts[1];
+
+                        if (dateString.length() > 23) {
+                            dateString = dateString.substring(0, 23);
+                        }
+
+                        try {
+                            Date date = sdf.parse(dateString);
+                            long currentTime = date.getTime();
+
+                            if (previousTime != 0) {
+                                long diffMillis = currentTime - previousTime;
+
+                                // filter invalid breaks
+                                if (diffMillis > 300 && diffMillis < 2000) {
+                                    double bpm = 60000.0 / diffMillis;
+                                    totalBpm += bpm;
+                                    count++;
+                                }
+                            }
+                            previousTime = currentTime;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                reader.close();
+
+                // compute avg and save into db
+                if (count > 0) {
+                    float avgBpm = (float) (totalBpm / count);
+
+                    AppDatabase db = AppDatabase.getInstance(getApplication());
+                    UserData user = db.userDataDao().getUserById(userId);
+                    if (user != null) {
+                        user.setBaselineHr(avgBpm);
+                        db.userDataDao().updateUser(user);
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 }
