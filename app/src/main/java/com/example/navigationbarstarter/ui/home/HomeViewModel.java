@@ -44,6 +44,10 @@ public class HomeViewModel extends AndroidViewModel {
     private static final int HRV_WINDOW_SIZE = 20;
     private final MutableLiveData<Double> hrvLive = new MutableLiveData<>();
 
+    // Default is true (Notifications Allowed).
+    // If false -> Red oblique line, and DND will activate on Play.
+    private MutableLiveData<Boolean> areNotificationsAllowed = new MutableLiveData<>(true);
+
 
     public HomeViewModel(@NonNull Application application) {
         super(application);
@@ -158,6 +162,21 @@ public class HomeViewModel extends AndroidViewModel {
         if (heartbeatSimulator != null) {
             heartbeatSimulator.stopSimulation();
         }
+    }
+
+    public LiveData<Boolean> getAreNotificationsAllowed() {
+        return areNotificationsAllowed;
+    }
+
+    public void toggleNotificationPreference() {
+        Boolean current = areNotificationsAllowed.getValue();
+        if (current != null) {
+            areNotificationsAllowed.setValue(!current);
+        }
+    }
+
+    public void setNotificationsAllowed(boolean allowed) {
+        areNotificationsAllowed.setValue(allowed);
     }
 
 

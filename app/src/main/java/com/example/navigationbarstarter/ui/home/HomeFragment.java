@@ -19,6 +19,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -35,6 +36,12 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import android.app.NotificationManager;
+import android.content.Intent;
+import android.provider.Settings;
+import android.graphics.Color;
+import android.content.res.ColorStateList;
 
 public class HomeFragment extends Fragment implements SensorEventListener {
 
@@ -55,10 +62,18 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private MaterialButton btnReset;
     private MaterialButton btnTest;
 
+    private MaterialButton btnNotification;
+
     // Logic Variables
     private int consecutiveHighBpmCount = 0;
     private boolean isBreakDialogShowing = false;
     private int currentHeartRate = 0;
+
+    // To store user selection for the dialog
+    // In a real app, you would fetch installed packages.
+    // Here we use a common list for demonstration.
+    final String[] appList = {"WhatsApp", "Instagram", "Facebook", "Telegram", "Gmail", "Messages", "TikTok"};
+    final boolean[] checkedAppItems = new boolean[appList.length];
 
     // Database
     private ExecutorService executorService;
@@ -94,6 +109,20 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         };
         uiHandler.post(uiRunnable);
 
+        updateNotificationIcon(true);
+
+        btnNotification.setOnClickListener(v -> {
+            NotificationManager nm = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            // 1. Check Permission
+            if (!nm.isNotificationPolicyAccessGranted()) {
+                Toast.makeText(requireContext(), "Please grant Do Not Disturb permission", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+            } else {
+                // 2. Show the Dialog
+                showNotificationSelectionDialog();
+            }
+        });
+
         // 2. Button Listeners
 
         // PLAY BUTTON (Start/Resume)
@@ -101,6 +130,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             if (!homeViewModel.isTimerRunning()) {
                 homeViewModel.toggleTimer();
                 updateUIState();
+
+                // disable notifications (DND) if user selected apps
+                setDoNotDisturb(true);
+                updateNotificationIcon(false);
             }
         });
 
@@ -109,6 +142,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             if (homeViewModel.isTimerRunning()) {
                 homeViewModel.toggleTimer();
                 updateUIState();
+
+                // enable notifications
+                setDoNotDisturb(false);
+                updateNotificationIcon(true);
             }
         });
 
@@ -117,6 +154,10 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             homeViewModel.resetTimer();
             consecutiveHighBpmCount = 0;
             updateUIState();
+
+            // enable notifications
+            setDoNotDisturb(false);
+            updateNotificationIcon(true);
         });
 
         btnTest.setOnClickListener(v -> showTestConfirmationDialog());
@@ -135,6 +176,37 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         startPulseAnimation();
 
         return root;
+    }
+
+    private void showNotificationSelectionDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Which notifications do you want to disable?")
+                .setMultiChoiceItems(appList, checkedAppItems, (dialog, which, isChecked) -> {
+                    // Update the selection state
+                    checkedAppItems[which] = isChecked;
+                })
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    // Check if ANY app was selected
+                    boolean anySelected = false;
+                    for (boolean checked : checkedAppItems) {
+                        if (checked) {
+                            anySelected = true;
+                            break;
+                        }
+                    }
+
+                    // Logic: If any app is selected, we BLOCK notifications (allowed = false)
+                    // If no apps are selected, we ALLOW notifications (allowed = true)
+                    homeViewModel.setNotificationsAllowed(!anySelected);
+
+                    if (anySelected) {
+                        Toast.makeText(requireContext(), "Notifications blocked for selected apps.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "All notifications enabled.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void showTestConfirmationDialog() {
@@ -164,6 +236,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         if (testDialog.getWindow() != null) {
             testDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+        testDialog.show();
 
         // 3. Initialize Views inside the dialog
         ImageView ivHeartTest = dialogView.findViewById(R.id.ivHeartTest);
@@ -265,7 +338,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             bpmString = String.format(Locale.getDefault(), " | %d BPM", currentHeartRate);
         }
 
-        timerText.setText(timeString + bpmString);
+        timerText.setText(timeString);
 
         // Update Progress
         int progressPercentage = (int) ((totalTime / 1000) % 1500) / 15;
@@ -325,6 +398,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         btnStop = binding.btnStop;
         btnReset = binding.btnReset;
         btnTest = binding.btnTest;
+        btnNotification = binding.btnNotification;
     }
 
     private void updateHeartRateUI() {
@@ -375,6 +449,23 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         scaleX.start();
         scaleY.start();
         alpha.start();
+
+    }
+
+    private void updateNotificationIcon(boolean allowed) {
+        if (allowed) {
+            // Notifications ALLOWED (Default)
+            btnNotification.setIconResource(R.drawable.ic_notifications_black_24dp);
+            // Set standard color (Black)
+            btnNotification.setIconTint(ColorStateList.valueOf(requireContext().getColor(R.color.text_primary)));
+            btnNotification.setStrokeColor(ColorStateList.valueOf(requireContext().getColor(R.color.text_primary)));
+        } else {
+            // Notifications BLOCKED (Red Oblique Band)
+            btnNotification.setIconResource(R.drawable.ic_notifications_disable);
+            // Set RED color
+            btnNotification.setIconTint(ColorStateList.valueOf(Color.RED));
+            btnNotification.setStrokeColor(ColorStateList.valueOf(Color.RED));
+        }
     }
 
     private void adjustHeartbeatSpeed(int bpm) {
@@ -396,6 +487,25 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         pulseInner.setStartDelay(500);
         pulseInner.setRepeatCount(ValueAnimator.INFINITE);
         pulseInner.start();
+    }
+
+    private void setDoNotDisturb(boolean enableDnd) {
+        NotificationManager nm = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (nm != null && nm.isNotificationPolicyAccessGranted()) {
+            Boolean areNotificationsAllowed = homeViewModel.getAreNotificationsAllowed().getValue();
+
+            // Block ONLY if user explicitly disabled notifications via the dialog
+            boolean shouldBlock = (areNotificationsAllowed != null && !areNotificationsAllowed);
+
+            if (enableDnd && shouldBlock) {
+                // Focus Mode START -> Silence Phone
+                nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            } else {
+                // Focus Mode STOP -> Restore Sounds
+                nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            }
+        }
     }
 
     @Override
