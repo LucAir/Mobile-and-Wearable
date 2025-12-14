@@ -7,6 +7,7 @@ import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.xml.namespace.QName;
@@ -82,7 +83,8 @@ public class UserData {
                     @Nullable String profileImageUri,
                     @Nullable boolean isFirstLogin,
                     @Nullable float baselineHr,
-                    @Nullable float baselineHrv) {
+                    @Nullable float baselineHrv
+                    ) {
         this.age = age;
         this.email = email;
         this.username = username;

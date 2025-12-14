@@ -1,5 +1,7 @@
 package com.example.navigationbarstarter.ui.home;
 
+import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
+
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import androidx.appcompat.app.AlertDialog;
@@ -19,6 +21,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -27,12 +30,15 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
+import com.example.navigationbarstarter.database.session.SessionViewModel;
 import com.example.navigationbarstarter.databinding.FragmentHomeBinding;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -40,6 +46,8 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
     private FragmentHomeBinding binding;
     private HomeViewModel homeViewModel;
+
+    private SessionViewModel sessionViewModel;
 
     // UI Components
     private TextView focusModeStatus;
@@ -69,11 +77,17 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private Handler uiHandler;
     private Runnable uiRunnable;
 
+    private static int sessionIndex;
+
+    private Map<Integer, List<String>> sessions;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
         homeViewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
+        sessionViewModel = new ViewModelProvider(this).get(SessionViewModel.class);
+
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -82,6 +96,12 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         db = AppDatabase.getInstance(requireContext());
         executorService = Executors.newSingleThreadExecutor();
         loadUserId();
+
+        //Used to return sessions from a CSV file
+        sessionIndex = 0;
+
+        //Initialize map
+        sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.two_sessions));
 
         // 1. Setup UI Update Loop
         uiHandler = new Handler(Looper.getMainLooper());
@@ -117,6 +137,8 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             homeViewModel.resetTimer();
             consecutiveHighBpmCount = 0;
             updateUIState();
+            List<String> sessionTS = this.sessions.get(sessionIndex + 1);
+            sessionViewModel.saveSession(currentUserId, sessionTS);
         });
 
         btnTest.setOnClickListener(v -> showTestConfirmationDialog());
@@ -133,6 +155,14 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
         startHeartbeatAnimation();
         startPulseAnimation();
+
+        sessionViewModel.getSaveSessionResults().observe(getViewLifecycleOwner(), success -> {
+            if (success != null && success) {
+                Toast.makeText(getContext(), "Session saved successfully", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to save session", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return root;
     }

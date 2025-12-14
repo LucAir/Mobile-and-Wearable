@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
+import com.example.navigationbarstarter.database.session.SessionData;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
 import com.github.mikephil.charting.charts.CandleStickChart;
 import com.github.mikephil.charting.charts.CombinedChart;
@@ -54,6 +55,7 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -105,10 +107,8 @@ public class DashboardFragment extends Fragment {
         txtFeature.setVisibility(View.INVISIBLE);
 
         //Initialize hashmap
-        this.sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.two_sessions));
-        Log.d("CSV_DEBUG", "Session1 size:" + (sessions != null ? sessions.size() : "null"));
-
         getUserIdFromSharedPreferences();
+        loadUserSessionsAndComputeChart();
 
         dashboardViewModel.getBaselineHr(userId);
         dashboardViewModel.getBaselineHrv(userId);
@@ -138,7 +138,6 @@ public class DashboardFragment extends Fragment {
     private void getUserIdFromSharedPreferences() {
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
         this.userId = sharedPreferences.getLong("userId", -1);
-        Log.d("DASH_DEBUG", "Loaded userId=" + userId);
     }
 
     private void setUpListener() {
@@ -537,6 +536,27 @@ public class DashboardFragment extends Fragment {
 
         return new BoxPlotData(candleEntry, medianEntry, outliers);
     }
+
+    private void loadUserSessionsAndComputeChart() {
+        executor.execute(() -> {
+            List<SessionData> userSessions = appDatabase.sessionDataDao().getSessionsForUser(userId);
+
+            //Convert SessionData -> Map<Integer, List<String>>
+            Map<Integer, List<String>> sessionsMap = new HashMap<>();
+            int index = 1;
+            for (SessionData s : userSessions) {
+                sessionsMap.put(index++, s.getSessionTS());
+            }
+
+            //Update fragment's field and charts on the main thread
+            requireActivity().runOnUiThread(() -> {
+                this.sessions = sessionsMap; //assign to fragment field
+                createHeartRateChartWithMinutes();
+                createCandleChart();
+            });
+        });
+    }
+
 
     @Override
     public void onDestroyView() {

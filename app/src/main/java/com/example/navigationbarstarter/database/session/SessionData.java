@@ -1,56 +1,44 @@
 package com.example.navigationbarstarter.database.session;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 import androidx.room.ForeignKey;
-import androidx.room.Index;
+import androidx.room.PrimaryKey;
 
 import com.example.navigationbarstarter.database.UserData;
+
+import java.util.LinkedList;
+import java.util.List;
 
 @Entity(tableName = "sessions",
         foreignKeys = @ForeignKey(
                 entity = UserData.class,
                 parentColumns = "id",
                 childColumns = "userId",
-                onDelete = ForeignKey.CASCADE
-        ),
-        indices = {@Index("userId")})
+                onDelete = ForeignKey.CASCADE)
+        )
+
 public class SessionData {
 
     @PrimaryKey(autoGenerate = true)
     private long id;
 
+    @ColumnInfo(name = "sessionTS")
+    private List<String> sessionTS;
+
+    //FK to user
+    @ColumnInfo(name = "userId")
     private long userId;
 
-    //Timestamp in milliseconds
-    @NonNull
-    private long startTime;
-
-    //Nullable - null means session is still active
-    @Nullable
-    private Long endTime;
-
-    //Calculated when session ends
-    private Integer avgHeartRate;
-
-    //Max BPM during session
-    private Integer maxHeartRate;
-
-    //Min BPM during session
-    private Integer minHeartRate;
-
-    //Optional notes about the session
-    private String notes;
+    @ColumnInfo(name = "createdAt")
+    private long createdAt;
 
     // Constructors
     public SessionData() {
     }
 
-    public SessionData(long userId, long startTime) {
-        this.userId = userId;
-        this.startTime = startTime;
+    public SessionData(List<String> sessionTS) {
+       this.sessionTS = sessionTS;
     }
 
     //Getters and Setters
@@ -62,6 +50,14 @@ public class SessionData {
         this.id = id;
     }
 
+    public List<String> getSessionTS() {
+        return sessionTS;
+    }
+
+    public void setSessionTS(List<String> sessionTS) {
+        this.sessionTS = sessionTS;
+    }
+
     public long getUserId() {
         return userId;
     }
@@ -70,63 +66,11 @@ public class SessionData {
         this.userId = userId;
     }
 
-    public long getStartTime() {
-        return startTime;
+    public long getCreatedAt() {
+        return createdAt;
     }
 
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
-
-    public Long getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(Long endTime) {
-        this.endTime = endTime;
-    }
-
-    public Integer getAvgHeartRate() {
-        return avgHeartRate;
-    }
-
-    public void setAvgHeartRate(Integer avgHeartRate) {
-        this.avgHeartRate = avgHeartRate;
-    }
-
-    public Integer getMaxHeartRate() {
-        return maxHeartRate;
-    }
-
-    public void setMaxHeartRate(Integer maxHeartRate) {
-        this.maxHeartRate = maxHeartRate;
-    }
-
-    public Integer getMinHeartRate() {
-        return minHeartRate;
-    }
-
-    public void setMinHeartRate(Integer minHeartRate) {
-        this.minHeartRate = minHeartRate;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    //Helper methods
-    public long getDuration() {
-        if (endTime == null) {
-            return System.currentTimeMillis() - startTime;
-        }
-        return endTime - startTime;
-    }
-
-    public boolean isActive() {
-        return endTime == null;
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
     }
 }

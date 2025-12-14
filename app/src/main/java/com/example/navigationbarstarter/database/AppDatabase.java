@@ -11,12 +11,15 @@ import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
 import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.database.item.ItemsDataDao;
+import com.example.navigationbarstarter.database.session.SessionData;
+import com.example.navigationbarstarter.database.session.SessionDataDao;
 
 @Database(entities = {UserData.class,
                       ModeChange.class,
                       GuardianData.class,
-                      ItemsData.class
-                      }, version = 10, exportSchema = false)
+                      ItemsData.class,
+                      SessionData.class,
+                      }, version = 12, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -27,6 +30,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ModeChangeDao modeChangeDao();
     public abstract GuardianDataDao guardianDataDao();
     public abstract ItemsDataDao itemsDataDao();
+    public abstract SessionDataDao sessionDataDao();
 
     public static synchronized AppDatabase getInstance(Context context) {
         if (instance == null) {
