@@ -1,6 +1,8 @@
 package com.example.navigationbarstarter.ui.home;
 
 import android.app.Application;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -186,7 +188,6 @@ public class HomeViewModel extends AndroidViewModel {
                 //Load all timestamps from the CSV
                 InputStream is = getApplication().getResources().openRawResource(R.raw.heart_rate_clean);
                 // open the CSV file
-                InputStream is = getApplication().getResources().openRawResource(R.raw.heart_rate_clean);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 List<String> timestamps = new ArrayList<>();
                 String line;
