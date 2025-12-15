@@ -4,10 +4,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverter;
 
+import com.example.navigationbarstarter.database.Converters;
 import com.example.navigationbarstarter.database.UserData;
 
-import java.util.LinkedList;
 import java.util.List;
 
 @Entity(tableName = "sessions",
@@ -33,12 +34,8 @@ public class SessionData {
     @ColumnInfo(name = "createdAt")
     private long createdAt;
 
-    // Constructors
+    //Constructors
     public SessionData() {
-    }
-
-    public SessionData(List<String> sessionTS) {
-       this.sessionTS = sessionTS;
     }
 
     //Getters and Setters

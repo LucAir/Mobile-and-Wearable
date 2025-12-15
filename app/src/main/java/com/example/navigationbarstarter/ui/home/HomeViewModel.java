@@ -1,6 +1,10 @@
 package com.example.navigationbarstarter.ui.home;
 
+import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
+
 import android.app.Application;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class HomeViewModel extends AndroidViewModel {
 
@@ -127,7 +132,6 @@ public class HomeViewModel extends AndroidViewModel {
         // because that logic is simpler in the UI layer or here.
         // Let's keep the "3 count" logic where it was, but we handle the "Snooze" check here.
 
-        //TODO: addins snnd ADDING HRV SETTINGS
         heartRateWindow.add(bpm);
         if (heartRateWindow.size() > HRV_WINDOW_SIZE) {
             heartRateWindow.remove(0);
@@ -160,70 +164,63 @@ public class HomeViewModel extends AndroidViewModel {
         }
     }
 
-
     public void calculateAndSaveBaseline(long userId) {
-        // separated thread to avoid blocking the UI
         new Thread(() -> {
             try {
-                // open the CSV file
-                InputStream is = getApplication().getResources().openRawResource(R.raw.two_sessions);
+                //Load all timestamps from the CSV
+                InputStream is = getApplication().getResources().openRawResource(R.raw.heart_rate_clean);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-
+                List<String> timestamps = new ArrayList<>();
                 String line;
-                // dont consider header
-                reader.readLine();
-
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
-
-                long previousTime = 0;
-                double totalBpm = 0;
-                int count = 0;
+                reader.readLine(); // Skip header
 
                 while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split(",");
-                    if (parts.length >= 2) {
-                        String dateString = parts[1];
-
-                        if (dateString.length() > 23) {
-                            dateString = dateString.substring(0, 23);
-                        }
-
-                        try {
-                            Date date = sdf.parse(dateString);
-                            long currentTime = date.getTime();
-
-                            if (previousTime != 0) {
-                                long diffMillis = currentTime - previousTime;
-
-                                // filter invalid breaks
-                                if (diffMillis > 300 && diffMillis < 2000) {
-                                    double bpm = 60000.0 / diffMillis;
-                                    totalBpm += bpm;
-                                    count++;
-                                }
-                            }
-                            previousTime = currentTime;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    timestamps.add(line);
                 }
                 reader.close();
 
-                // compute avg and save into db
-                if (count > 0) {
-                    float avgBpm = (float) (totalBpm / count);
+                if (timestamps.isEmpty()) {
+                    Log.e("HomeViewModel", "No timestamps found in CSV");
+                    return;
+                }
 
-                    AppDatabase db = AppDatabase.getInstance(getApplication());
-                    UserData user = db.userDataDao().getUserById(userId);
-                    if (user != null) {
-                        user.setBaselineHr(avgBpm);
-                        db.userDataDao().updateUser(user);
-                    }
+                for (int i = 0; i < timestamps.size(); i++) {
+                    Log.d("Timestamp:", timestamps.get(i));
+                }
+
+                //Use the HeartRateVariability class to compute BPM and HRV
+                List<Float> bpmList = HeartRateVariability.computeBPM(timestamps);
+                List<Float> hrvList = HeartRateVariability.computeHRV(timestamps);
+
+                if (bpmList.isEmpty() || hrvList.isEmpty()) {
+                    Log.e("HomeViewModel", "Failed to compute BPM or HRV");
+                    return;
+                }
+
+                // Calculate averages
+                float sumBpm = 0;
+                for (float bpm : bpmList) sumBpm += bpm;
+                float avgBpm = sumBpm / bpmList.size();
+
+                float sumHrv = 0;
+                for (float hrv : hrvList) sumHrv += hrv;
+                float avgHrv = sumHrv / hrvList.size();
+
+                Log.d("HomeViewModel", "Calculated baselines - HR: " + avgBpm + ", HRV: " + avgHrv);
+
+                // Save to database
+                AppDatabase db = AppDatabase.getInstance(getApplication());
+                UserData user = db.userDataDao().getUserById(userId);
+                if (user != null) {
+                    user.setBaselineHr(avgBpm);
+                    user.setBaselineHrv(avgHrv);
+                    db.userDataDao().updateUser(user);
+
+                    Log.d("HomeViewModel", "Baselines saved successfully");
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e("HomeViewModel", "Error calculating baselines", e);
             }
         }).start();
     }

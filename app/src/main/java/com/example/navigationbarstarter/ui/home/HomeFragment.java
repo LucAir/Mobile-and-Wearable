@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,7 +50,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
     private SessionViewModel sessionViewModel;
 
-    // UI Components
+    //UI Components
     private TextView focusModeStatus;
     private TextView timerText;
     private CircularProgressIndicator timerProgress;
@@ -63,23 +64,23 @@ public class HomeFragment extends Fragment implements SensorEventListener {
     private MaterialButton btnReset;
     private MaterialButton btnTest;
 
-    // Logic Variables
+    //Logic Variables
     private int consecutiveHighBpmCount = 0;
     private boolean isBreakDialogShowing = false;
     private int currentHeartRate = 0;
 
-    // Database
+    //Database
     private ExecutorService executorService;
     private AppDatabase db;
     private long currentUserId = -1;
 
-    // UI Update Loop
+    //UI Update Loop
     private Handler uiHandler;
     private Runnable uiRunnable;
 
-    private static int sessionIndex;
+    private int sessionIndex;
 
-    private Map<Integer, List<String>> sessions;
+    private List<List<String>> sessions;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -101,7 +102,11 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         sessionIndex = 0;
 
         //Initialize map
-        sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.two_sessions));
+        sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.ten_sessions));
+        Log.d("SessionDebug", "Loaded " + sessions.size() + " sessions from CSV");
+        for (int i = 0; i < sessions.size(); i++) {
+            Log.d("SessionDebug", "session " + i + " size=" + sessions.get(i).size());
+        }
 
         // 1. Setup UI Update Loop
         uiHandler = new Handler(Looper.getMainLooper());
@@ -132,13 +137,16 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             }
         });
 
-        // RESET BUTTON
+        //RESET BUTTON
         btnReset.setOnClickListener(v -> {
             homeViewModel.resetTimer();
             consecutiveHighBpmCount = 0;
             updateUIState();
-            List<String> sessionTS = this.sessions.get(sessionIndex + 1);
-            sessionViewModel.saveSession(currentUserId, sessionTS);
+            if(sessionIndex < sessions.size()) {
+                List<String> sessionTS = this.sessions.get(sessionIndex);
+                Log.d("SessionDebug", "sessionIndex=" + sessionIndex + ", sessionTS=" + sessionTS);
+                sessionViewModel.saveSession(currentUserId, sessionTS);
+            }
         });
 
         btnTest.setOnClickListener(v -> showTestConfirmationDialog());
@@ -156,9 +164,14 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         startHeartbeatAnimation();
         startPulseAnimation();
 
+        // Observe save result once
         sessionViewModel.getSaveSessionResults().observe(getViewLifecycleOwner(), success -> {
             if (success != null && success) {
                 Toast.makeText(getContext(), "Session saved successfully", Toast.LENGTH_SHORT).show();
+                // Increment sessionIndex after successful save
+                sessionIndex++;
+                // Optionally, reload sessions for charts
+                sessionViewModel.loadComparedSessions(currentUserId);
             } else {
                 Toast.makeText(getContext(), "Failed to save session", Toast.LENGTH_SHORT).show();
             }
@@ -187,7 +200,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         // 2. Build the Dialog
         AlertDialog testDialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
-                .setCancelable(false) // User must press Cancel button to exit
+                .setCancelable(false) //User must press Cancel button to exit
                 .create();
 
         // make background transparent to see rounded corners if needed
@@ -228,7 +241,7 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         heartBeatY.start();
 
         // 5. Start a 2-minute Countdown
-        CountDownTimer testTimer = new CountDownTimer(120000, 1000) {
+        CountDownTimer testTimer = new CountDownTimer(12000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 long minutes = (millisUntilFinished / 1000) / 60;

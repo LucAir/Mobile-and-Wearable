@@ -12,9 +12,20 @@ public interface SessionDataDao {
     @Insert
     long insertSession(SessionData session);
 
-    @Delete
-    void deleteSession(SessionData session);
-
     @Query("SELECT * FROM sessions WHERE userId = :userId ORDER BY createdAt ASC")
     List<SessionData> getSessionsForUser(long userId);
+
+    @Query("""
+        SELECT * FROM sessions
+        WHERE userId = :userId
+        ORDER BY createdAt ASC
+    """)
+    List<SessionData> getSessionsByUserAsc(long userId);
+
+    @Query("""
+        SELECT * FROM sessions
+        WHERE userId = :userId
+        ORDER BY createdAt DESC
+    """)
+    List<SessionData> getSessionsByUserDesc(long userId);
 }
