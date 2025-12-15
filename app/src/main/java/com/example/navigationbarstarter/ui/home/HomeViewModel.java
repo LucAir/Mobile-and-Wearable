@@ -185,7 +185,7 @@ public class HomeViewModel extends AndroidViewModel {
         new Thread(() -> {
             try {
                 // open the CSV file
-                InputStream is = getApplication().getResources().openRawResource(R.raw.two_sessions);
+                InputStream is = getApplication().getResources().openRawResource(R.raw.heart_rate_clean);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
                 String line;
