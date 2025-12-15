@@ -5,18 +5,12 @@ import android.app.Application;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-
-import com.example.navigationbarstarter.database.AppDatabase;
-import com.example.navigationbarstarter.database.UserData;
-import com.example.navigationbarstarter.ui.settings.SettingsRepository;
 
 public class DashboardViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Float> userBaselineHr = new MutableLiveData<>();
     private final MutableLiveData<Float> userBaselineHrv = new MutableLiveData<>();
     private final DashboardRepository repository;
-
 
     public DashboardViewModel(Application application) {
         super(application);

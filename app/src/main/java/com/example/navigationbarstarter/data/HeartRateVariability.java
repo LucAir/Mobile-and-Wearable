@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class HeartRateVariability {
 
@@ -44,7 +43,7 @@ public class HeartRateVariability {
      * We use SDF for the base timestamp, then manually add microseconds.
      */
     private static final SimpleDateFormat sdf =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS", Locale.US);
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
     /**
      * Convert RR interval (ms) to BPM.
@@ -62,7 +61,7 @@ public class HeartRateVariability {
     private static long parseTimestampMicros(String ts) throws ParseException {
 
         //Split second and microsecond part
-        String[] parts = ts.split("//.");
+        String[] parts = ts.split("\\.");
 
         long baseMs = sdf.parse(parts[0]).getTime(); //ms
 

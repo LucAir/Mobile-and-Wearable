@@ -8,7 +8,7 @@ import com.example.navigationbarstarter.database.UserData;
 import com.example.navigationbarstarter.database.UserDataDao;
 import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.guardian.GuardianDataDao;
-import com.example.navigationbarstarter.database.item.InitializeItems; // Ensure this is imported
+import com.example.navigationbarstarter.database.item.InitializeItems;
 import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.database.item.ItemsDataDao;
 import com.example.navigationbarstarter.database.item.Type;

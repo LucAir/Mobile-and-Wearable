@@ -35,22 +35,46 @@ public class FakeMLAlgorithm {
     public static final int STRESS_MONITOR = 1;
     public static final int STRESS_OPTIMAL_STATE = 0;
 
-    public static int detectStressLevel(int heartRate, double hrv, int baseline_hr, float baseline_hrv) {
-        //Determine if heart-rate is high relative to user's baseline
-        boolean isHeartRateHigh = heartRate > (baseline_hr + 15);
-        boolean isHRVLow = hrv < (baseline_hrv * 0.7);
+    public static int detectStressLevel(
+            int heartRate,
+            double hrv,
+            int baseline_hr,
+            float baseline_hrv
+    ) {
+        // Heart rate thresholds
+        boolean hrHigh = heartRate > (baseline_hr + 10);
+        boolean hrVeryHigh = heartRate > (baseline_hr + 20);
 
-        Log.d("StressDebug", "BPM=" + heartRate + " HRV=" + hrv + " HRbaseline=" + baseline_hr + " HRVbaseline=" + baseline_hrv);
+        // HRV thresholds
+        boolean hrvLow = hrv < (baseline_hrv * 0.6);
+        boolean hrvVeryLow = hrv < (baseline_hrv * 0.3);
 
-        //CRITICAL STRESS
-        if (isHeartRateHigh && isHRVLow) {
+        Log.d("StressDebug",
+                "HR=" + heartRate +
+                        " HRV=" + hrv +
+                        " | hrHigh=" + hrHigh +
+                        " hrVeryHigh=" + hrVeryHigh +
+                        " hrvLow=" + hrvLow +
+                        " hrvVeryLow=" + hrvVeryLow
+        );
+
+        //CRITICAL: extreme physiology
+        if (hrVeryHigh || hrvVeryLow) {
             return STRESS_CRITICAL;
-        } else if (!isHeartRateHigh && isHRVLow) {
-            return STRESS_BREAK_RECOMMENDED;
-        } else if(isHeartRateHigh && !isHRVLow) {
-            return STRESS_MONITOR;
-        } else {
-            return STRESS_OPTIMAL_STATE;
         }
+
+        //WARNING: moderate stress
+        if (hrHigh && hrvLow) {
+            return STRESS_BREAK_RECOMMENDED;
+        }
+
+        //MONITOR: elevated HR only (exercise, excitement)
+        if (hrHigh) {
+            return STRESS_MONITOR;
+        }
+
+        //NORMAL
+        return STRESS_OPTIMAL_STATE;
     }
+
 }

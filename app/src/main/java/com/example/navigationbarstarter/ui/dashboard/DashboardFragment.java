@@ -4,7 +4,6 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.graphics.Paint;
 import android.util.Log;
-import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
 import static com.example.navigationbarstarter.data.HeartRateVariability.computeBPM;
 import static com.example.navigationbarstarter.data.HeartRateVariability.computeHRV;
 import static com.example.navigationbarstarter.ui.dashboard.FakeMLAlgorithm.STRESS_BREAK_RECOMMENDED;
@@ -18,16 +17,18 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
+import com.example.navigationbarstarter.database.session.SessionViewModel;
 import com.example.navigationbarstarter.databinding.FragmentDashboardBinding;
-import com.github.mikephil.charting.charts.CandleStickChart;
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.ScatterChart;
@@ -35,9 +36,6 @@ import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.CandleData;
 import com.github.mikephil.charting.data.CandleDataSet;
 import com.github.mikephil.charting.data.CandleEntry;
@@ -52,10 +50,7 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -64,28 +59,25 @@ public class DashboardFragment extends Fragment {
     private AppDatabase appDatabase;
     private Executor executor;
     private FragmentDashboardBinding binding;
-
     private long userId;
-
     private CombinedChart combinedChart;
-
     private LineChart heartRateChart;
-
     private TabLayout tab;
-
     private TextView txtFeature;
 
     //Used to store baseline values
     private float userBaseline_hr;
     private float userBaseline_hrv;
 
-    private Map<Integer, List<String>> sessions;
-
+    //Ordering and retrieving session values
+    private boolean isDescending = true;
+    private SessionViewModel sessionViewModel;
+    private Button btnOrderToggle;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
+        sessionViewModel =
+                new ViewModelProvider(this).get(SessionViewModel.class);
 
         appDatabase = AppDatabase.getInstance(getContext());
         executor = Executors.newSingleThreadExecutor();
@@ -98,36 +90,43 @@ public class DashboardFragment extends Fragment {
         heartRateChart = binding.lineChart;
         tab = binding.tabLayout;
         txtFeature = binding.txtFeature;
+        btnOrderToggle = binding.btnOrderToggle;
+        btnOrderToggle.setVisibility(View.GONE);
 
         //Initial visibility on startup
         heartRateChart.setVisibility(View.VISIBLE);
         combinedChart.setVisibility(View.INVISIBLE);
         txtFeature.setVisibility(View.INVISIBLE);
 
-        //Initialize hashmap
-        this.sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.two_sessions));
-        Log.d("CSV_DEBUG", "Session1 size:" + (sessions != null ? sessions.size() : "null"));
-
+        //Get user ID
         getUserIdFromSharedPreferences();
 
-        dashboardViewModel.getBaselineHr(userId);
-        dashboardViewModel.getBaselineHrv(userId);
+        //Load last 2 session for boxplot
+        sessionViewModel.loadComparedSessions(userId);
 
-        setUpListener();
+        setUpListener(sessionViewModel);
 
-        //Checking if live variables has changed
-        dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
-            if (baselineHr != 0) {
-                this.userBaseline_hr = baselineHr;
+        //Observe baseline HR and HRV
+        observeBaselines();
 
-                //Checking if live variables has changed
-                dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
-                    if (baselineHrv != 0) {
-                        this.userBaseline_hrv = baselineHrv;
-                        createHeartRateChartWithMinutes();
-                        createCandleChart();
-                    }
-                });
+        //Observe sessions for both line chart (last session) and boxplot (last 2 sessions)
+        sessionViewModel.getComparedSessions().observe(getViewLifecycleOwner(), allSessions -> {
+            if (allSessions == null || allSessions.isEmpty()) {
+                return;
+            }
+
+            //Initialize chart after collecting baseline values -> we can display information
+            if(userBaseline_hr != 0 && userBaseline_hrv != 0) {
+
+                //Render linechart
+                createHeartRateChartWithMinutes(allSessions.get(0));
+
+                //Boxplot: last 2 sessions
+                if (allSessions.size() >= 2) {
+                   createCandleChart(allSessions.get(0), allSessions.get(1));
+                } else if (allSessions.size() == 1) {
+                   createCandleChart(allSessions.get(0), null);
+                }
             }
         });
 
@@ -138,10 +137,10 @@ public class DashboardFragment extends Fragment {
     private void getUserIdFromSharedPreferences() {
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", MODE_PRIVATE);
         this.userId = sharedPreferences.getLong("userId", -1);
-        Log.d("DASH_DEBUG", "Loaded userId=" + userId);
     }
 
-    private void setUpListener() {
+    //Setting up listener for tabs and button
+    private void setUpListener(SessionViewModel sessionViewModel) {
         tab.selectTab(tab.getTabAt(0));
         tab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -151,18 +150,21 @@ public class DashboardFragment extends Fragment {
                         heartRateChart.setVisibility(View.VISIBLE);
                         combinedChart.setVisibility(View.INVISIBLE);
                         txtFeature.setVisibility(View.INVISIBLE);
+                        btnOrderToggle.setVisibility(View.GONE);
                         break;
 
                     case 1:
                         heartRateChart.setVisibility(View.INVISIBLE);
                         combinedChart.setVisibility(View.VISIBLE);
                         txtFeature.setVisibility(View.INVISIBLE);
+                        btnOrderToggle.setVisibility(View.VISIBLE);
                         break;
 
                     case 2:
                         heartRateChart.setVisibility(View.INVISIBLE);
                         combinedChart.setVisibility(View.INVISIBLE);
                         txtFeature.setVisibility(View.VISIBLE);
+                        btnOrderToggle.setVisibility(View.GONE);
                         break;
                 }
             }
@@ -170,10 +172,31 @@ public class DashboardFragment extends Fragment {
             @Override public void onTabUnselected(TabLayout.Tab t) {}
             @Override public void onTabReselected(TabLayout.Tab t) {}
         });
+
+        btnOrderToggle.setOnClickListener((v) -> {
+            isDescending = !isDescending;
+
+            binding.btnOrderToggle.setIcon(
+                    AppCompatResources.getDrawable(
+                            requireContext(),
+                            isDescending ? R.drawable.ic_arrow_down : R.drawable.ic_arrow_up
+                    )
+            );
+            //Reload session in new order
+            sessionViewModel.loadComparedSessions(userId, !isDescending);
+        });
     }
 
-    private void createHeartRateChartWithMinutes() {
-        List<String> session1 = sessions.get(1);
+    /**
+     * Method to create the linechart:
+     * 1) We read 1 session (the last one)
+     * 2) We display a green line -> all points in a session
+     * 3) We detect stress using
+     * 3) We overlay yellow point
+     * 4) We overlay red point
+     */
+    private void createHeartRateChartWithMinutes(List<String> session1) {
+        Log.d("DashboardFragment", "session1=" + (session1 != null ? session1.size() + " items" : "null"));
         List<Float> bpm = new ArrayList<>();
         List<Float> hrv = new ArrayList<>();
 
@@ -181,6 +204,7 @@ public class DashboardFragment extends Fragment {
             //Compute BPM and HRV per minute (have same points)
             bpm = computeBPM(session1);
             hrv = computeHRV(session1);
+            Log.d("DashboardFragment", "Computed BPM size=" + bpm.size() + ", HRV size=" + hrv.size());
         }
 
         //Ensure same size (JUST TO BE SURE)
@@ -229,6 +253,7 @@ public class DashboardFragment extends Fragment {
         //Configure Y axis (left) - only left axis visible
         YAxis leftAxis = heartRateChart.getAxisLeft();
         leftAxis.setAxisMinimum(40f);  //Start from 40 BPM
+        leftAxis.setAxisMaximum(max + 10);
         leftAxis.setEnabled(true);
 
         YAxis rightAxis = heartRateChart.getAxisRight();
@@ -286,6 +311,7 @@ public class DashboardFragment extends Fragment {
         medianLine.setLineColor(Color.BLUE);
         medianLine.setLineWidth(2f);
         medianLine.enableDashedLine(10f, 10f, 0f);
+        leftAxis.removeAllLimitLines();
         leftAxis.addLimitLine(medianLine);
 
         //Add green first, overlay sets after so they render on top
@@ -326,10 +352,7 @@ public class DashboardFragment extends Fragment {
      * Outliers (>10 BPM from avg) shown as individual points
      * Whiskers always go from absolute min to max
      */
-    private void createCandleChart() {
-        //Load sessions
-        List<String> session1 = sessions.get(1);
-        List<String> session2 = sessions.get(2);
+    private void createCandleChart(List<String> session1, List<String> session2) {
 
         List<Float> bpm1 = new ArrayList<>();
         List<Float> hrv1 = new ArrayList<>();
@@ -417,9 +440,11 @@ public class DashboardFragment extends Fragment {
         combinedChart.getAxisRight().setEnabled(false);
 
         //Left Y-axis (BPM values)
+        float maxBpm = computeMax(bpm1, bpm2) + 15;
+        float axisMax = Math.max(100, maxBpm);
         YAxis leftAxis = combinedChart.getAxisLeft();
         leftAxis.setAxisMinimum(40f);
-        leftAxis.setAxisMaximum(200f);
+        leftAxis.setAxisMaximum(axisMax);
         leftAxis.setGranularity(10f);
         leftAxis.setDrawGridLines(true);
         leftAxis.setAxisLineWidth(1f);
@@ -536,6 +561,43 @@ public class DashboardFragment extends Fragment {
         Entry medianEntry = new Entry(xPosition, avg);
 
         return new BoxPlotData(candleEntry, medianEntry, outliers);
+    }
+
+    private int computeMax(List<Float> session1, List<Float> session2) {
+        float max = 0f;
+
+        for (float value : session1) {
+            if (value > max) {
+                max = value;
+            }
+        }
+
+        for (float value : session2) {
+            if (value > max) {
+                max = value;
+            }
+        }
+
+        return Math.round(max);
+    }
+
+    private void observeBaselines() {
+        DashboardViewModel dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
+
+        dashboardViewModel.getBaselineHr(userId);
+        dashboardViewModel.getBaselineHrv(userId);
+
+        dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
+            if (baselineHr != null && baselineHr != 0) {
+                this.userBaseline_hr = baselineHr;
+            }
+        });
+
+        dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
+            if (baselineHrv != null && baselineHrv != 0) {
+                this.userBaseline_hrv = baselineHrv;
+            }
+        });
     }
 
     @Override

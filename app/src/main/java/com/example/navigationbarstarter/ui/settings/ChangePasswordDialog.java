@@ -31,7 +31,7 @@ public class ChangePasswordDialog extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_change_password, container, false);
 
-        // Get ViewModel scoped to parent fragment
+        //Get ViewModel scoped to parent fragment
         settingsViewModel = new ViewModelProvider(requireParentFragment())
                 .get(SettingsViewModel.class);
 
@@ -49,7 +49,7 @@ public class ChangePasswordDialog extends DialogFragment {
 
         Dialog dialog = getDialog();
         if (dialog != null) {
-            // Centered dialog with wrap_content
+            //Centered dialog with wrap_content
             dialog.getWindow().setLayout(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -75,10 +75,6 @@ public class ChangePasswordDialog extends DialogFragment {
         userId = sharedPreferences.getLong("userId", -1);
     }
 
-//    private void loadOldPassword(UserData userData) {
-//        etOldPassword.setText(userData.getPassword());
-//    }
-
     private void observePasswordResult() {
         settingsViewModel.getEqualPasswordLiveData().observe(this, result -> {
 
@@ -87,24 +83,24 @@ public class ChangePasswordDialog extends DialogFragment {
             etConfirmNewPassword.setError(null);
 
             switch (result) {
-                case 1: // new == old
+                case 1: //new == old
                     etNewPassword.setError("New password cannot be equal to old password");
                     break;
 
-                case 2: // mismatch confirm
+                case 2: //mismatch confirm
                     etNewPassword.setError("Passwords do not match");
                     etConfirmNewPassword.setError("Passwords do not match");
                     break;
 
-                case 3: // regex rules
+                case 3: //regex rules
                     etNewPassword.setError("Password must have 1 uppercase, 1 special character, 8+ chars");
                     break;
 
-                case 4: // incorrect old password
+                case 4: //incorrect old password
                     etOldPassword.setError("Old password is incorrect");
                     break;
 
-                case 0: // success
+                case 0: //success
                     Toast.makeText(getContext(), "Password updated!", Toast.LENGTH_SHORT).show();
                     dismiss();
                     break;

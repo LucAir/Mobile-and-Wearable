@@ -6,13 +6,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -33,12 +31,11 @@ import java.util.Objects;
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;
-    private TextView settingsTitle;
     private ImageView ivProfileImage;
     private TextInputEditText etName, etSurname, etEmail, etUsername, etBaseline;
     private Button btnChangePassword, btnSave, btnLogout;
     private ActivityResultLauncher<Intent> pickImageLauncher;
-    private Uri selectedImageUri; // store the selected URI
+    private Uri selectedImageUri; //store the selected URI
     private long userId;
 
     /*
@@ -204,7 +201,6 @@ public class SettingsFragment extends Fragment {
     public void onPasswordChangeRequested(String oldPass, String newPass, String confirmNewPass, SettingsViewModel settingsViewModel) {
         settingsViewModel.checkAndUpdatePassword(userId, oldPass, newPass, confirmNewPass);
     }
-
 
     @Override
     public void onDestroyView() {

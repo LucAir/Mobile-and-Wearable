@@ -68,7 +68,7 @@ public class CSVHeartbeatSimulator {
     public void startSimulation(HeartbeatCallback callback, long intervalMs, boolean restartFromZero) {
         if (bpmList.isEmpty()) return;
 
-        // If already running, stop first to avoid duplicates
+        //If already running, stop first to avoid duplicates
         stopSimulation();
 
         if (restartFromZero) {
@@ -107,16 +107,14 @@ public class CSVHeartbeatSimulator {
     }
 
     //Load new CSV with timestamp instead of BPM
-    public static Map<Integer, List<String>> loadCsvTimestamp(InputStream csvInputStream) {
-        Map<Integer, List<String>> sessions = new HashMap<>();
+    public static List<List<String>> loadCsvTimestamp(InputStream csvInputStream) {
+        List<List<String>> sessions = new ArrayList<>();
 
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream))) {
             String line;
             boolean firstLine = true;
 
             while ((line = reader.readLine()) != null) {
-
                 //Skip header
                 if (firstLine) {
                     firstLine = false;
@@ -127,24 +125,28 @@ public class CSVHeartbeatSimulator {
                 if (parts.length < 2) continue;
 
                 try {
-                    int sessionId = Integer.parseInt(parts[0].trim());
+                    int sessionId = Integer.parseInt(parts[0].trim()) -1 ;
                     String timestamp = parts[1].trim();
 
-                    //Insert into the map
-                    sessions.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(timestamp);
-                } catch (Exception ignored) {
-                    //Ignore malformed rows (must not be there in our case)
+                    //Make sure the list is large enough
+                    while (sessions.size() <= sessionId) {
+                        sessions.add(new ArrayList<>());
+                    }
+
+                    //Add timestamp to correct session
+                    sessions.get(sessionId).add(timestamp);
+                } catch (NumberFormatException ignored) {
+                    //Ignore malformed rows
                 }
             }
 
-            reader.close();
-            return sessions;
-
         } catch (Exception e) {
             e.printStackTrace();
-            return new HashMap<>();
         }
+
+        return sessions;
     }
+
 
     public void reset() {
         stopSimulation();

@@ -27,7 +27,6 @@ public class GuardianItemAdapter extends RecyclerView.Adapter<GuardianItemAdapte
 
     public interface OnItemClickListener {
         void onItemClick(ItemsData item);
-        // The 'onPurchaseClick' method has been completely removed here.
     }
 
     public GuardianItemAdapter(OnItemClickListener listener) {

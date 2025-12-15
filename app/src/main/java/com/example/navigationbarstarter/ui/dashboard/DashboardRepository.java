@@ -5,8 +5,6 @@ import android.app.Application;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
 import com.example.navigationbarstarter.database.UserDataDao;
-import com.example.navigationbarstarter.ui.settings.SettingsRepository;
-
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 

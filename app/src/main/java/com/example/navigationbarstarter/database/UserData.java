@@ -9,8 +9,6 @@ import androidx.room.PrimaryKey;
 
 import java.util.List;
 
-import javax.xml.namespace.QName;
-
 @Entity(tableName = "userdata",
         //Creating index for fast access (retrieve user by email/username)
         //Useful for concurrency also, because are unique, so even if a thread write Luca as username,
@@ -31,23 +29,18 @@ public class UserData {
     @ColumnInfo(name = "surname")
     private String surname;
 
-    @NonNull
     @ColumnInfo(name = "age")
     private int age;
 
-    @NonNull
     @ColumnInfo(name = "email")
     private String email;
 
-    @NonNull
     @ColumnInfo(name = "username")
     private String username;
 
-    @NonNull
     @ColumnInfo(name = "password")
     private String password;
 
-    @NonNull
     @ColumnInfo(name = "guardianId")
     private long guardianId;
 
@@ -71,18 +64,19 @@ public class UserData {
     private float baselineHrv;
 
     public UserData(@NonNull String username,
-                    @NonNull int age,
+                    int age,
                     @NonNull String email,
                     @NonNull String password,
-                    @NonNull long guardianId,
+                    long guardianId,
                     @NonNull List<Long> unlockedItems,
                     long token,
                     @Nullable String name,
                     @Nullable String surname,
                     @Nullable String profileImageUri,
-                    @Nullable boolean isFirstLogin,
-                    @Nullable float baselineHr,
-                    @Nullable float baselineHrv) {
+                    boolean isFirstLogin,
+                    float baselineHr,
+                    float baselineHrv
+                    ) {
         this.age = age;
         this.email = email;
         this.username = username;

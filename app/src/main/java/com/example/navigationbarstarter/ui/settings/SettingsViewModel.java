@@ -2,13 +2,10 @@ package com.example.navigationbarstarter.ui.settings;
 
 import android.app.Application;
 
-import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
-import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserData;
 
 public class SettingsViewModel extends AndroidViewModel {
