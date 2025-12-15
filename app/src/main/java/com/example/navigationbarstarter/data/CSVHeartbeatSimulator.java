@@ -68,7 +68,7 @@ public class CSVHeartbeatSimulator {
     public void startSimulation(HeartbeatCallback callback, long intervalMs, boolean restartFromZero) {
         if (bpmList.isEmpty()) return;
 
-        // If already running, stop first to avoid duplicates
+        //If already running, stop first to avoid duplicates
         stopSimulation();
 
         if (restartFromZero) {
@@ -115,7 +115,7 @@ public class CSVHeartbeatSimulator {
             boolean firstLine = true;
 
             while ((line = reader.readLine()) != null) {
-                // Skip header
+                //Skip header
                 if (firstLine) {
                     firstLine = false;
                     continue;
@@ -128,15 +128,15 @@ public class CSVHeartbeatSimulator {
                     int sessionId = Integer.parseInt(parts[0].trim()) -1 ;
                     String timestamp = parts[1].trim();
 
-                    // Make sure the list is large enough
+                    //Make sure the list is large enough
                     while (sessions.size() <= sessionId) {
                         sessions.add(new ArrayList<>());
                     }
 
-                    // Add timestamp to correct session
+                    //Add timestamp to correct session
                     sessions.get(sessionId).add(timestamp);
                 } catch (NumberFormatException ignored) {
-                    // Ignore malformed rows
+                    //Ignore malformed rows
                 }
             }
 

@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,10 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.navigationbarstarter.R;
 import com.example.navigationbarstarter.database.AppDatabase;
 import com.example.navigationbarstarter.database.UserDataDao;
-import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.database.item.Type;
-import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;

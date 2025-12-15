@@ -112,11 +112,8 @@ public class DashboardFragment extends Fragment {
         //Observe sessions for both line chart (last session) and boxplot (last 2 sessions)
         sessionViewModel.getComparedSessions().observe(getViewLifecycleOwner(), allSessions -> {
             if (allSessions == null || allSessions.isEmpty()) {
-                Log.d("DashboardFragment", "allSessions is null or empty");
                 return;
             }
-
-            Log.d("DashboardFragment", "Received " + allSessions.size() + " sessions");
 
             //Initialize chart after collecting baseline values -> we can display information
             if(userBaseline_hr != 0 && userBaseline_hrv != 0) {
@@ -131,10 +128,6 @@ public class DashboardFragment extends Fragment {
                    createCandleChart(allSessions.get(0), null);
                 }
             }
-            Log.d("DashboardFragment",
-                    "Sessions received: " + allSessions.size() +
-                            ", last size=" + allSessions.get(allSessions.size() - 1).size()
-            );
         });
 
         return root;
@@ -200,7 +193,7 @@ public class DashboardFragment extends Fragment {
      * 2) We display a green line -> all points in a session
      * 3) We detect stress using
      * 3) We overlay yellow point
-     * 4) We overlat red point
+     * 4) We overlay red point
      */
     private void createHeartRateChartWithMinutes(List<String> session1) {
         Log.d("DashboardFragment", "session1=" + (session1 != null ? session1.size() + " items" : "null"));
@@ -570,26 +563,6 @@ public class DashboardFragment extends Fragment {
         return new BoxPlotData(candleEntry, medianEntry, outliers);
     }
 
-//    private void loadUserSessionsAndComputeChart() {
-//        executor.execute(() -> {
-//            List<SessionData> userSessions = appDatabase.sessionDataDao().getSessionsForUser(userId);
-//
-//            //Convert SessionData -> Map<Integer, List<String>>
-//            Map<Integer, List<String>> sessionsMap = new HashMap<>();
-//            int index = 1;
-//            for (SessionData s : userSessions) {
-//                sessionsMap.put(index++, s.getSessionTS());
-//            }
-//
-//            //Update fragment's field and charts on the main thread
-//            requireActivity().runOnUiThread(() -> {
-//                this.sessions = sessionsMap; //assign to fragment field
-//                createHeartRateChartWithMinutes();
-//                createCandleChart();
-//            });
-//        });
-//    }
-
     private int computeMax(List<Float> session1, List<Float> session2) {
         float max = 0f;
 
@@ -611,47 +584,21 @@ public class DashboardFragment extends Fragment {
     private void observeBaselines() {
         DashboardViewModel dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
 
-        Log.d("DashboardFragment", "Loading baselines for userId: " + userId);
-
         dashboardViewModel.getBaselineHr(userId);
         dashboardViewModel.getBaselineHrv(userId);
 
         dashboardViewModel.getUserBaselineHr().observe(getViewLifecycleOwner(), baselineHr -> {
-            Log.d("DashboardFragment", "Baseline HR observer triggered: " + baselineHr);
             if (baselineHr != null && baselineHr != 0) {
                 this.userBaseline_hr = baselineHr;
-                //updateChartsIfReady();
             }
         });
 
         dashboardViewModel.getUserBaselineHrv().observe(getViewLifecycleOwner(), baselineHrv -> {
-            Log.d("DashboardFragment", "Baseline HRV observer triggered: " + baselineHrv);
             if (baselineHrv != null && baselineHrv != 0) {
                 this.userBaseline_hrv = baselineHrv;
-                //updateChartsIfReady();
             }
         });
     }
-
-//    private void updateChartsIfReady() {
-//        // Check if we have all necessary data
-//        if (userBaseline_hr == 0 || userBaseline_hrv == 0) {
-//            Log.d("DashboardFragment", "Baselines not ready yet");
-//            return;
-//        }
-//
-//        // Update line chart if data is available
-//        if (lineSession != null && !lineSession.isEmpty()) {
-//            Log.d("DashboardFragment", "Creating line chart");
-//            createHeartRateChartWithMinutes();
-//        }
-//
-//        // Update boxplot if data is available
-//        if (boxplotSessions != null && !boxplotSessions.isEmpty()) {
-//            Log.d("DashboardFragment", "Creating boxplot");
-//            createCandleChart();
-//        }
-//    }
 
     @Override
     public void onDestroyView() {

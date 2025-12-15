@@ -35,24 +35,6 @@ public class FakeMLAlgorithm {
     public static final int STRESS_MONITOR = 1;
     public static final int STRESS_OPTIMAL_STATE = 0;
 
-//    public static int detectStressLevel(int heartRate, double hrv, int baseline_hr, float baseline_hrv) {
-//        //Determine if heart-rate is high relative to user's baseline
-//        boolean isHeartRateHigh = heartRate > (baseline_hr + 15);
-//        boolean isHRVLow = hrv < (baseline_hrv * 0.7);
-//
-//        Log.d("StressDebug", "BPM=" + heartRate + " HRV=" + hrv + " HRbaseline=" + baseline_hr + " HRVbaseline=" + baseline_hrv);
-//
-//        //CRITICAL STRESS
-//        if (isHeartRateHigh || isHRVLow) {
-//            return STRESS_CRITICAL;
-//        } else if (!isHeartRateHigh && isHRVLow) {
-//            return STRESS_BREAK_RECOMMENDED;
-//        } else if(isHeartRateHigh && !isHRVLow) {
-//            return STRESS_MONITOR;
-//        } else {
-//            return STRESS_OPTIMAL_STATE;
-//        }
-//    }
     public static int detectStressLevel(
             int heartRate,
             double hrv,

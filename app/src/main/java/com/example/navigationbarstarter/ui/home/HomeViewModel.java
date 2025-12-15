@@ -1,7 +1,5 @@
 package com.example.navigationbarstarter.ui.home;
 
-import static com.example.navigationbarstarter.data.CSVHeartbeatSimulator.loadCsvTimestamp;
-
 import android.app.Application;
 import android.util.Log;
 
@@ -19,12 +17,8 @@ import com.example.navigationbarstarter.database.UserData;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class HomeViewModel extends AndroidViewModel {
 

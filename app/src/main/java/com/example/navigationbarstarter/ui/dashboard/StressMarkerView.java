@@ -34,7 +34,7 @@ public class StressMarkerView extends MarkerView {
 
         int index = (int) e.getX();
 
-        // Validate index bounds
+        //Validate index bounds
         if (index >= 0 && index < bpmData.size() && index < hrvData.size()) {
             float bpm = bpmData.get(index);
             float hrv = hrvData.get(index);

@@ -42,7 +42,6 @@ public class SessionRepository {
                 sessionData.setSessionTS(sessionTS);
                 sessionData.setCreatedAt(System.currentTimeMillis());
                 long sessionId = sessionDataDao.insertSession(sessionData);
-                Log.d("SessionRepository", "Inserted sessionId=" + sessionId);
                 boolean success = sessionId > 0;
                 callback.onResult(success);
             } catch (Exception e) {
@@ -69,15 +68,12 @@ public class SessionRepository {
             List<SessionData> sessions = ascending
                     ? sessionDataDao.getSessionsByUserAsc(userId)
                     : sessionDataDao.getSessionsByUserDesc(userId);
-            Log.d("SessionRepository", "Fetched " + sessions.size() + " sessions for userId=" + userId);
 
             //Group each session's timestamps into List<List<String>>
             List<List<String>> groupedSessions = new ArrayList<>();
             for (SessionData session : sessions) {
                 if (session.getSessionTS() != null && !session.getSessionTS().isEmpty()) {
                     groupedSessions.add(session.getSessionTS());
-                } else {
-                    Log.d("SessionRepository", "SessionTS null or empty for sessionId=" + session.getId());
                 }
             }
 

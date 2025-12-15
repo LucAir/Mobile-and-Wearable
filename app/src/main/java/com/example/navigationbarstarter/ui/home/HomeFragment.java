@@ -103,10 +103,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
         //Initialize map
         sessions = loadCsvTimestamp(requireContext().getResources().openRawResource(R.raw.ten_sessions));
-        Log.d("SessionDebug", "Loaded " + sessions.size() + " sessions from CSV");
-        for (int i = 0; i < sessions.size(); i++) {
-            Log.d("SessionDebug", "session " + i + " size=" + sessions.get(i).size());
-        }
 
         // 1. Setup UI Update Loop
         uiHandler = new Handler(Looper.getMainLooper());
@@ -144,7 +140,6 @@ public class HomeFragment extends Fragment implements SensorEventListener {
             updateUIState();
             if(sessionIndex < sessions.size()) {
                 List<String> sessionTS = this.sessions.get(sessionIndex);
-                Log.d("SessionDebug", "sessionIndex=" + sessionIndex + ", sessionTS=" + sessionTS);
                 sessionViewModel.saveSession(currentUserId, sessionTS);
             }
         });

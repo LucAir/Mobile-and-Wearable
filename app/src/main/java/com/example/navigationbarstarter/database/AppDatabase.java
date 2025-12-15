@@ -19,7 +19,7 @@ import com.example.navigationbarstarter.database.session.SessionDataDao;
                       GuardianData.class,
                       ItemsData.class,
                       SessionData.class,
-                      }, version = 35, exportSchema = false)
+                      }, version = 36, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

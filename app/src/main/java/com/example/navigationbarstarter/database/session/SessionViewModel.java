@@ -46,7 +46,7 @@ public class SessionViewModel extends AndroidViewModel {
     }
 
     public void loadComparedSessions(long userId, boolean ascending) {
-        repository.getSessionsGroupedByIndex(userId, ascending, sessions -> comparedSessions.postValue(sessions));
+        repository.getSessionsGroupedByIndex(userId, ascending, comparedSessions::postValue);
     }
 
 }

@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Converters {
 
-    // Convert List<Long> to a single String (comma-separated)
+    //Convert List<Long> to a single String (comma-separated)
     @TypeConverter
     public static String fromList(List<Long> list) {
         if (list == null || list.isEmpty()) return "";
@@ -19,11 +19,11 @@ public class Converters {
         for (Long l : list) {
             sb.append(l).append(",");
         }
-        sb.deleteCharAt(sb.length() - 1); // remove last comma
+        sb.deleteCharAt(sb.length() - 1); //remove last comma
         return sb.toString();
     }
 
-    // Convert String back to List<Long>
+    //Convert String back to List<Long>
     @TypeConverter
     public static List<Long> toList(String data) {
         List<Long> list = new ArrayList<>();
