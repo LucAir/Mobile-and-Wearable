@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_black_rounded"
+    android:padding="32dp">
+
+    <TextView
+        android:id="@+id/tvTestTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Breathe &amp; Relax"
+        android:textColor="#B3B3B3"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvTestSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Measuring heart rate..."
+        android:textColor="#80FFFFFF"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTestTitle" />
+
+    <View
+        android:id="@+id/viewPulseTest"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/circle_pulse_outer"
+        android:alpha="0.5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTestSubtitle" />
+
+    <ImageView
+        android:id="@+id/ivHeartTest"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/ic_heart"
+        app:layout_constraintBottom_toBottomOf="@id/viewPulseTest"
+        app:layout_constraintEnd_toEndOf="@id/viewPulseTest"
+        app:layout_constraintStart_toStartOf="@id/viewPulseTest"
+        app:layout_constraintTop_toTopOf="@id/viewPulseTest"
+        app:tint="@color/heart_color" />
+
+    <TextView
+        android:id="@+id/tvTestTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="02:00"
+        android:textColor="#949494"
+        android:textSize="32sp"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/viewPulseTest" />
+
+    <Button
+        android:id="@+id/btnCancelTest"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Cancel"
+        android:textColor="#FF5252"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTestTimer" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

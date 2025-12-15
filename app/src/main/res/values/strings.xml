@@ -1,6 +1,35 @@
 <resources>
-    <string name="app_name">Mobile and Wearable Project</string>
+    <string name="app_name">Productivity Guardian</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_notifications">Settings</string>
+    <string name="already_have_an_account_login">Already have an account? Login</string>
+    <string name="register">Register</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="age">Age</string>
+    <string name="username">Username</string>
+    <string name="sign_up_to_get_started">Sign up to get started</string>
+    <string name="create_account">Create Account</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_to_your_account">Login to your account</string>
+    <string name="usernameLogin">Username</string>
+    <string name="passwordLogin">Password</string>
+    <string name="login">Login</string>
+    <string name="don_t_have_an_account_register">Don\'t have an account? Register</string>
+    <string name="buy">Buy</string>
+    <string name="no_items_available">No Item Available</string>
+    <string name="rarity_legendary">Legendary\n</string>
+    <string name="rarity_rare">Rare\n</string>
+    <string name="rarity_common">Common\n</string>
+    <string name="rarity_all">All Rarity\n</string>
+    <string name="customize_guardian">Customize Guardian</string>
+    <string name="item_image">image\n</string>
+    <string name="account_settings">Account Settings</string>
+    <string name="new_feature_to_be_added_soon">New Feature to be added soon!</string>
+    <string name="session_statistics">Session Statistics</string>
+    <string name="last">Last</string>
+    <string name="compare">Compare</string>
+    <string name="emojy">😂</string>
 </resources>

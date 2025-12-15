@@ -1,22 +1,238 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
-
-    <TextView
-        android:id="@+id/text_home"
+    android:layout_height="match_parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:paddingBottom="80dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/focus_mode_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="24dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/gradient_focus_mode"
+                android:padding="24dp"
+                android:paddingBottom="32dp">
+
+                <TextView
+                    android:id="@+id/focus_mode_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Focus Mode: Idle"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/lock_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/ic_lock"
+                    app:layout_constraintBottom_toBottomOf="@id/focus_mode_status"
+                    app:layout_constraintStart_toEndOf="@id/focus_mode_status"
+                    app:layout_constraintTop_toTopOf="@id/focus_mode_status"
+                    app:tint="@color/icon_tint" />
+
+                <View
+                    android:id="@+id/pulse_circle_outer"
+                    android:layout_width="208dp"
+                    android:layout_height="208dp"
+                    android:layout_marginTop="32dp"
+                    android:background="@drawable/circle_pulse_outer"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/focus_mode_status" />
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/timer_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:progress="0"
+                    app:indicatorColor="@color/progress_color"
+                    app:indicatorSize="160dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/pulse_circle_outer"
+                    app:layout_constraintEnd_toEndOf="@+id/pulse_circle_outer"
+                    app:layout_constraintStart_toStartOf="@+id/pulse_circle_outer"
+                    app:layout_constraintTop_toTopOf="@+id/pulse_circle_outer"
+                    app:trackColor="@color/progress_track"
+                    app:trackThickness="8dp" />
+
+                <View
+                    android:id="@+id/pulse_circle_inner"
+                    android:layout_width="149dp"
+                    android:layout_height="149dp"
+                    android:background="@drawable/circle_pulse_outer"
+                    app:layout_constraintBottom_toBottomOf="@+id/timer_progress"
+                    app:layout_constraintEnd_toEndOf="@+id/timer_progress"
+                    app:layout_constraintStart_toStartOf="@+id/timer_progress"
+                    app:layout_constraintTop_toTopOf="@+id/timer_progress" />
+
+                <ImageView
+                    android:id="@+id/heart_icon"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/ic_heart"
+                    app:layout_constraintBottom_toBottomOf="@+id/pulse_circle_inner"
+                    app:layout_constraintEnd_toEndOf="@+id/pulse_circle_inner"
+                    app:layout_constraintStart_toStartOf="@+id/pulse_circle_inner"
+                    app:layout_constraintTop_toTopOf="@+id/pulse_circle_inner"
+                    app:tint="@color/heart_color" />
+
+                <ImageView
+                    android:id="@+id/heartbeat_line"
+                    android:layout_width="120dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_heartbeat"
+                    app:layout_constraintBottom_toBottomOf="@+id/heart_icon"
+                    app:layout_constraintEnd_toEndOf="@+id/pulse_circle_inner"
+                    app:layout_constraintStart_toStartOf="@+id/heart_icon"
+                    app:layout_constraintTop_toTopOf="@+id/heart_icon"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/timer_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="00:00"
+                    android:textColor="@color/text_primary"
+                    android:textSize="48sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/pulse_circle_outer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_reset"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginEnd="16dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="30dp"
+                    app:icon="@android:drawable/ic_menu_close_clear_cancel"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#F00303"
+                    app:layout_constraintBottom_toBottomOf="@+id/btn_play"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_play"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/btn_play"
+                    app:strokeColor="@color/text_primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_play"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginTop="12dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="40dp"
+                    app:icon="@android:drawable/ic_media_play"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="36dp"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_stop"
+                    app:layout_constraintStart_toEndOf="@+id/btn_reset"
+                    app:layout_constraintTop_toBottomOf="@+id/timer_text" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_stop"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="16dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="30dp"
+                    app:icon="@android:drawable/ic_media_pause"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="24dp"
+                    app:iconTint="@color/icon_tint"
+                    app:layout_constraintBottom_toBottomOf="@+id/btn_play"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/btn_play"
+                    app:layout_constraintTop_toTopOf="@+id/btn_play"
+                    app:strokeColor="@color/text_primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_test"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="30dp"
+
+                    app:icon="@android:drawable/ic_menu_edit"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="24dp"
+                    app:iconTint="@color/icon_tint"
+                    app:layout_constraintBottom_toBottomOf="@+id/focus_mode_status"
+
+                    app:layout_constraintEnd_toEndOf="parent"
+
+                    app:layout_constraintTop_toTopOf="@+id/focus_mode_status"
+                    app:layout_constraintVertical_bias="0.0"
+                    app:strokeColor="@color/text_primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNotification"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="30dp"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="24dp"
+                    app:iconTint="@color/text_primary"
+                    app:layout_constraintBottom_toTopOf="@+id/btn_stop"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_test"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
+                    app:strokeColor="@color/text_primary" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>
