@@ -5,9 +5,12 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -26,7 +29,6 @@ import com.example.navigationbarstarter.database.UserDataDao;
 import com.example.navigationbarstarter.database.guardian.GuardianData;
 import com.example.navigationbarstarter.database.item.ItemsData;
 import com.example.navigationbarstarter.database.item.Type;
-import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ import java.util.concurrent.Executors;
 public class GuardianFragment extends Fragment {
 
     private GuardianViewModel viewModel;
+    private AppDatabase db;
+    private UserDataDao userDataDao;
+    private Executor executor;
 
     // --- Layout Views ---
     private View bottomDrawer;
@@ -46,42 +51,35 @@ public class GuardianFragment extends Fragment {
     private ImageView imgArrow;
     private TextView tabCharacter, tabPet, tabBackground;
     private TextView tvUserTokens;
+    private TextView tvGuardianName;
     private RecyclerView recyclerItems;
     private GuardianItemAdapter itemsAdapter;
 
     // --- Guardian Layers (The Preview) ---
     private ImageView layerBackground, layerAura, layerFace, layerBody, layerPet;
 
-    // --- State Variables (Fixed Missing Variables) ---
+    // --- State Variables ---
     private boolean isMenuOpen = false;
-    private Type selectedType = Type.TSHIRT; // Default to Character (Body)
+    private Type selectedType = Type.TSHIRT;
 
     private long guardianId = -1;
     private long userId = -1;
     private long userToken = 0;
 
-    // Helper lists/maps to manage logic
+    // Helper lists/maps
     private List<Long> unlockedItemIds = new ArrayList<>();
     private Map<Long, ItemsData> itemsMap = new HashMap<>();
-
-    // --- Database Helpers ---
-    private UserDataDao userDataDao;
-    private Executor executor;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Initialize DB access
-        AppDatabase db = AppDatabase.getInstance(requireContext());
+        db = AppDatabase.getInstance(requireContext());
         userDataDao = db.userDataDao();
         executor = Executors.newSingleThreadExecutor();
 
-        // Initialize ViewModel
         viewModel = new ViewModelProvider(this).get(GuardianViewModel.class);
-
-        // Load User Data (ID and GuardianID) from SharedPreferences
-        getUserDataFromSharedPreferences();
     }
 
     @Override
@@ -103,6 +101,7 @@ public class GuardianFragment extends Fragment {
         tabBackground = view.findViewById(R.id.tab_background);
 
         tvUserTokens = view.findViewById(R.id.tv_user_tokens);
+        tvGuardianName = view.findViewById(R.id.tv_guardian_name); // <--- FIND VIEW
         recyclerItems = view.findViewById(R.id.items_recycler_view);
 
         // Layers
@@ -117,104 +116,26 @@ public class GuardianFragment extends Fragment {
         setupTabs();
         setUpItemsGrid();
 
-        // Load the initial category of items
+        // Setup Name Click Listener
+        if (tvGuardianName != null) {
+            tvGuardianName.setOnClickListener(v -> showRenameDialog());
+        }
+
+        // Load Data
+        getUserDataFromSharedPreferences();
         viewModel.loadItems(selectedType);
 
         // 3. Observe Data
         observeViewModel();
 
-        // 4. Initial Layout State (Hide menu initially)
+        // 4. Initial Layout State
         view.post(() -> {
-            // Get the height of the drawer
-            int height = 520;
-
-            // Move BOTH the drawer and the button down by the drawer's height
+            int height = 600;
             bottomDrawer.setTranslationY(height);
             btnToggleMenu.setTranslationY(height);
 
             isMenuOpen = false;
         });
-    }
-
-    private void observeViewModel() {
-        // 1. Observe Guardian Data (to know what is equipped)
-        viewModel.getGuardianLiveData().observe(getViewLifecycleOwner(), guardian -> {
-            if (guardian != null) {
-                this.guardianId = guardian.getGuardianId();
-                viewModel.loadEquippedItemsForGuardian(guardianId);
-            }
-        });
-
-        // 2. Observe Items List (The items shown in the bottom drawer)
-        viewModel.getItemsListLiveData().observe(getViewLifecycleOwner(), items -> {
-            if (items != null) {
-                itemsAdapter.setItems(items);
-            }
-        });
-
-        // 3. Observe Unlocked Items (To show locks or allow equip)
-        viewModel.getUserUnlockedItemsLiveData().observe(getViewLifecycleOwner(), unlockedIds -> {
-            if (unlockedIds != null) {
-                this.unlockedItemIds = unlockedIds;
-                itemsAdapter.setUnlockedItemsIds(unlockedIds);
-            }
-        });
-
-        // 4. Observe Equipped Items (To draw the preview characters)
-        viewModel.getEquippedItemsLiveData().observe(getViewLifecycleOwner(), equippedIds -> {
-            if (equippedIds != null) {
-                updateGuardianPreview(equippedIds);
-            }
-        });
-
-        // 5. Observe Items Map (Needed to look up images for the preview)
-        viewModel.getItemsMapLiveData().observe(getViewLifecycleOwner(), map -> {
-            if (map != null) {
-                this.itemsMap = map;
-                // If we have equipped items loaded, update preview now that map is ready
-                if (viewModel.getEquippedItemsLiveData().getValue() != null) {
-                    updateGuardianPreview(viewModel.getEquippedItemsLiveData().getValue());
-                }
-            }
-        });
-
-        // 6. Observe Loading/Error/Messages
-        viewModel.getSuccessMessageLiveData().observe(getViewLifecycleOwner(), this::showSuccess);
-        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
-    }
-
-    private void updateGuardianPreview(List<Long> equippedIds) {
-        // Reset/Hide layers first
-        layerFace.setVisibility(View.GONE);
-        layerBody.setVisibility(View.GONE);
-        layerPet.setVisibility(View.GONE);
-        layerAura.setVisibility(View.GONE);
-        layerBackground.setVisibility(View.GONE);
-
-        if (itemsMap.isEmpty()) return;
-
-        for (Long id : equippedIds) {
-            ItemsData item = itemsMap.get(id);
-            if (item == null) continue;
-
-            switch (item.getType()) {
-                case TSHIRT:
-                    layerBody.setImageResource(item.getImageResId());
-                    layerBody.setVisibility(View.VISIBLE);
-                    break;
-                case PET:
-                    layerPet.setImageResource(item.getImageResId());
-                    layerPet.setVisibility(View.VISIBLE);
-                    break;
-                case BACKGROUND:
-                    layerBackground.setImageResource(item.getImageResId());
-                    layerBackground.setVisibility(View.VISIBLE);
-                    break;
-            }
-        }
-
-        // Update adapter so it can show the green circle on equipped items
-        itemsAdapter.setEquippedItemIds(equippedIds);
     }
 
     private void getUserDataFromSharedPreferences() {
@@ -226,15 +147,92 @@ public class GuardianFragment extends Fragment {
                 long fetchedGuardianId = userDataDao.getGuardianId(userId);
                 userToken = userDataDao.getTokenNumber(userId);
 
-                requireActivity().runOnUiThread(() -> {
-                    this.guardianId = fetchedGuardianId;
-                    updateTokenDisplay();
-                    viewModel.loadGuardian(guardianId);
-                    viewModel.loadUserUnlockedItems(userId);
+                // Run UI updates on Main Thread
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        this.guardianId = fetchedGuardianId;
+                        updateTokenDisplay();
+
+                        // Load View Model Data
+                        viewModel.loadGuardian(guardianId);
+                        viewModel.loadUserUnlockedItems(userId);
+
+                        // Load Guardian Name from DB now that we have userId
+                        loadGuardianNameFromDb();
+                    });
+                }
+            }
+        });
+    }
+
+    // --- NAME CUSTOMIZATION LOGIC ---
+
+    private void showRenameDialog() {
+        final EditText input = new EditText(requireContext());
+        input.setSingleLine(true);
+        input.setText(tvGuardianName.getText());
+        input.selectAll();
+
+        FrameLayout container = new FrameLayout(requireContext());
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.leftMargin = 50;
+        params.rightMargin = 50;
+        input.setLayoutParams(params);
+        container.addView(input);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Rename Guardian")
+                .setMessage("Choose a name for your guardian:")
+                .setView(container)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newName = input.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        saveGuardianName(newName);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void saveGuardianName(String newName) {
+        if (userId == -1) return;
+
+        executor.execute(() -> {
+            GuardianData guardian = db.guardianDataDao().getGuardianById(guardianId);
+            if (guardian != null) {
+                guardian.setName(newName);
+                db.guardianDataDao().updateGuardian(guardian);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (tvGuardianName != null) {
+                        tvGuardianName.setText(newName);
+                    }
                 });
             }
         });
     }
+
+    private void loadGuardianNameFromDb() {
+        if (userId == -1) return;
+
+        executor.execute(() -> {
+            // We use the guardianId we fetched earlier
+            GuardianData guardian = db.guardianDataDao().getGuardianById(guardianId);
+
+            if (guardian != null && guardian.getName() != null) {
+                String dbName = guardian.getName();
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (tvGuardianName != null) {
+                        tvGuardianName.setText(dbName);
+                    }
+                });
+            }
+        });
+    }
+
 
     private void updateTokenDisplay() {
         if (tvUserTokens != null) {
@@ -244,46 +242,16 @@ public class GuardianFragment extends Fragment {
 
     private void setupMenuToggle() {
         btnToggleMenu.setOnClickListener(v -> {
-            // Calculate the distance (height of the drawer)
-            float moveDistance = 530;
-
+            float moveDistance = 600;
             if (isMenuOpen) {
-                // --- CLOSE MENU (Go Down) ---
-
-                // 1. Move Drawer Down
-                bottomDrawer.animate()
-                        .translationY(moveDistance)
-                        .setDuration(300)
-                        .start();
-
-                // 2. Move Button Down (Follow the drawer)
-                btnToggleMenu.animate()
-                        .translationY(moveDistance)
-                        .setDuration(300)
-                        .start();
-
-                // 3. Rotate Arrow back to original
+                bottomDrawer.animate().translationY(moveDistance).setDuration(300).start();
+                btnToggleMenu.animate().translationY(moveDistance).setDuration(300).start();
                 imgArrow.animate().rotation(0).setDuration(300).start();
-
             } else {
-                // --- OPEN MENU (Go Up) ---
-
-                // 1. Move Drawer Up (Reset to original 0 position)
-                bottomDrawer.animate()
-                        .translationY(0)
-                        .setDuration(300)
-                        .start();
-
-                // 2. Move Button Up (Reset to original 0 position)
-                btnToggleMenu.animate()
-                        .translationY(0)
-                        .setDuration(300)
-                        .start();
-
-                // 3. Rotate Arrow to point down
+                bottomDrawer.animate().translationY(0).setDuration(300).start();
+                btnToggleMenu.animate().translationY(0).setDuration(300).start();
                 imgArrow.animate().rotation(180).setDuration(300).start();
             }
-
             isMenuOpen = !isMenuOpen;
         });
     }
@@ -321,25 +289,19 @@ public class GuardianFragment extends Fragment {
     }
 
     private void setUpItemsGrid() {
-        recyclerItems.setLayoutManager(
-                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        );
-
-        itemsAdapter = new GuardianItemAdapter(item -> handleItemClick(item));
+        recyclerItems.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        itemsAdapter = new GuardianItemAdapter(this::handleItemClick);
         recyclerItems.setAdapter(itemsAdapter);
     }
 
     private void handleItemClick(ItemsData item) {
         boolean isUnlocked = unlockedItemIds.contains(item.getId());
 
-        // 1. If Unlocked OR Free -> Equip
         if (isUnlocked || item.getPriceToUnlock() <= 0) {
             viewModel.equipItem(guardianId, item, null);
-            return;
+        } else {
+            showPurchaseDialog(item);
         }
-
-        // 2. If Locked -> Prompt Purchase
-        showPurchaseDialog(item);
     }
 
     private void showPurchaseDialog(ItemsData item) {
@@ -363,6 +325,68 @@ public class GuardianFragment extends Fragment {
         }
     }
 
+    private void observeViewModel() {
+        viewModel.getGuardianLiveData().observe(getViewLifecycleOwner(), guardian -> {
+            if (guardian != null) {
+                this.guardianId = guardian.getGuardianId();
+                viewModel.loadEquippedItemsForGuardian(guardianId);
+            }
+        });
+        viewModel.getItemsListLiveData().observe(getViewLifecycleOwner(), items -> {
+            if (items != null) itemsAdapter.setItems(items);
+        });
+        viewModel.getUserUnlockedItemsLiveData().observe(getViewLifecycleOwner(), unlockedIds -> {
+            if (unlockedIds != null) {
+                this.unlockedItemIds = unlockedIds;
+                itemsAdapter.setUnlockedItemsIds(unlockedIds);
+            }
+        });
+        viewModel.getEquippedItemsLiveData().observe(getViewLifecycleOwner(), equippedIds -> {
+            if (equippedIds != null) updateGuardianPreview(equippedIds);
+        });
+        viewModel.getItemsMapLiveData().observe(getViewLifecycleOwner(), map -> {
+            if (map != null) {
+                this.itemsMap = map;
+                if (viewModel.getEquippedItemsLiveData().getValue() != null) {
+                    updateGuardianPreview(viewModel.getEquippedItemsLiveData().getValue());
+                }
+            }
+        });
+        viewModel.getSuccessMessageLiveData().observe(getViewLifecycleOwner(), this::showSuccess);
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
+    }
+
+    private void updateGuardianPreview(List<Long> equippedIds) {
+        layerFace.setVisibility(View.GONE);
+        layerBody.setVisibility(View.GONE);
+        layerPet.setVisibility(View.GONE);
+        layerAura.setVisibility(View.GONE);
+        layerBackground.setVisibility(View.GONE);
+
+        if (itemsMap.isEmpty()) return;
+
+        for (Long id : equippedIds) {
+            ItemsData item = itemsMap.get(id);
+            if (item == null) continue;
+
+            switch (item.getType()) {
+                case TSHIRT:
+                    layerBody.setImageResource(item.getImageResId());
+                    layerBody.setVisibility(View.VISIBLE);
+                    break;
+                case PET:
+                    layerPet.setImageResource(item.getImageResId());
+                    layerPet.setVisibility(View.VISIBLE);
+                    break;
+                case BACKGROUND:
+                    layerBackground.setImageResource(item.getImageResId());
+                    layerBackground.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
+        itemsAdapter.setEquippedItemIds(equippedIds);
+    }
+
     private void showError(String message) {
         if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
@@ -370,6 +394,4 @@ public class GuardianFragment extends Fragment {
     private void showSuccess(String message) {
         if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
-
-
 }

@@ -25,7 +25,6 @@ public class GuardianItemAdapter extends RecyclerView.Adapter<GuardianItemAdapte
     private List<Long> equippedItemIds = new ArrayList<>();
     private final OnItemClickListener listener;
 
-    // --- FIX 1: Interface must have only ONE method for lambdas to work ---
     public interface OnItemClickListener {
         void onItemClick(ItemsData item);
         // The 'onPurchaseClick' method has been completely removed here.
