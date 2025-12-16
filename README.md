@@ -23,14 +23,31 @@ You might be wondering what makes our app different from others on the market:
 ### Technical Details and workflow
 
 #### How Session will be recorder
-Since our application does not connct to a real device (smarthwatch) we created 2 realistic session. This session are under res/raw/two_session.csv. have been created using a python script. 
+Since our application does not connct to a real device (smartwatch) we created 2 realistic session. This session are under res/raw/ten_session.csv. have been created using a python script. 
 The file is structured with two column (session ID, timestamp of each heartbeat).
 Each session contains 3600 points. 
 We read this session and we compute RR, and HRV, then we compute bpm and HRV to produce 60 values (more usable than 3600). The goal here is to show that a device will handle heartbeat as timestamp, and we are able to produce from there bpm.
 So realistically if you want to simulate focus mode, what happens is that doesn't matter when you stop the timer, the recorded session will always be of one hour. This was done just for let the user see a real visualization and provide (in the boxplot chart) a comparison between two session.
 In each chart also user can see some detail, not to technical of course, but just to provide a more clear idea of whats happening.
+Baseline values are also taken from a csv file (res/raw/heart_rate_clean.csv)
 
 #### Machine Learning (Fake) Algorithm
 Here as I mentioned before in the "more user friendly explanation" we decided to register the user heartbeat for two minutes the first time it log-in the application. In this way we can compute the baseline heartbeat (as the average of the two min recording) and the baseline hrv (in the same way). From there the algorithm to detect stress simply add values to this baseline values. If a value recorded in the session is higher or lower than the baseline + / - a value, we get a warnings or a critical point.
+
+#### HOW TO RUN 
+MUST HAVE:
+1) Java 21
+2) gradle-8.13
+3) Nexus simulator (5X API 36)
+
+To correctly run the app you MUST follow this workflow:
+1) Registration
+2) Login
+3) Take the test otherwise chart won't be displayed since we cannot compute baseline values
+4) Start a session, stop at whatever time you want. Session are taken from ten_session.csv (you can find it in /res/raw/ten_session.csv). Each session will last 1h.
+5) Other fragents can be navigated with no problem of order.
+
+Enjoy!
+Luca, Francesco❤️
 
 
