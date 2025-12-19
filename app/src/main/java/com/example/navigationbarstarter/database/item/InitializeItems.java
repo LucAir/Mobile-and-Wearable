@@ -31,6 +31,15 @@ public class InitializeItems {
         ));
 
         items.add(new ItemsData(
+                "Rome Jersey",
+                Rarity.RARE,
+                200,
+                Type.TSHIRT,
+                R.drawable.rome_suit
+                ));
+
+
+        items.add(new ItemsData(
                 "Superman Suit",
                 Rarity.LEGENDARY,
                 1000,
@@ -101,6 +110,15 @@ public class InitializeItems {
                 Type.BACKGROUND,
                 R.drawable.inter_background
         ));
+
+        items.add(new ItemsData(
+                "Rome Jersey",
+                Rarity.RARE,
+                180,
+                Type.BACKGROUND,
+                R.drawable.rome_background
+        ));
+
 
         items.add(new ItemsData(
                 "Krypton",
