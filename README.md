@@ -47,9 +47,12 @@ To correctly run the app you MUST follow this workflow:
 4) Start a session, stop at whatever time you want. Session are taken from ten_session.csv (you can find it in /res/raw/ten_session.csv). Each session will last 1h.
 5) Other fragents can be navigated with no problem of order.
 
-#### Small Notes by Luca
-First classes coded (Access, Login, Registration) were done at the very beginning, for this reason seems an inconsistency how they have been done compare to the last classes like Analitics, because in the last I use MVVC pattern becuase I found it more elegant and less bug prone. Hope this is not a big problem.
-I had not refactored the code due to time issue.
+#### Small Note by Luca
+The initial classes, such as RegisterActivity, were implemented using a traditional Activity-based approach, where UI, validation, and database logic are all handled directly within the activity. This leads to tightly coupled code and manual threading management. In contrast, the later classes, such as DashboardFragment and analytics-related components, follow the MVVM (Model-View-ViewModel) pattern. In MVVM, the ViewModel handles all data operations and exposes state via LiveData, while the View (Fragment or Activity) only observes changes and updates the UI reactively. This separation of concerns makes the code more structured, maintainable, and testable, reduces the risk of bugs, and eliminates most manual thread and callback management. Adopting MVVM for analytics improves scalability and readability compared to the earlier registration implementation.
+I had not refactored that previous done code due to time issue.
+Hope this is not a big probelm.
+
+
 Enjoy!
 Luca, Francesco❤️
 
